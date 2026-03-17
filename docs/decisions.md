@@ -57,10 +57,22 @@
 - Avoids cloud costs during development
 
 **Implementation:**
-- Store images in `/data/images` mounted Docker volume
-- Use consistent naming: `{timestamp}-{userId}-{uuid}.jpg`
-- Design database schema with `image_url` field (works for local path or cloud URL)
-- Document migration path in code comments
+**Status: Completed** - Image storage system implemented with:
+- Modular `ImageService` class with singleton instance
+- Download from WhatsApp via `whatsapp-web.js` MessageMedia
+- Validation: mimetype, file size (10MB default), buffer integrity checks
+- Storage: `/data/images` mounted Docker volume
+- Filename format: `{timestamp}-{userId}-{random}.{ext}`
+- SHA256 hash calculation for duplicate detection
+- Custom error types: `ImageServiceError`, `FileSystemError`
+- Full unit test coverage (33 tests passing)
+
+**Files:**
+- `src/services/imageService.ts` - Main image processing service
+- `src/utils/imageValidation.ts` - Format and size validation
+- `src/utils/fileSystem.ts` - File operations with error handling
+- `src/types/image.ts` - TypeScript interfaces
+- `tests/unit/utils/` - Comprehensive unit tests
 
 **Future considerations:**
 - Cloud storage needed if multiple instances or off-site backup
@@ -321,17 +333,21 @@ src/
 - Test whatsapp-web.js message history access
 
 ### Testing Strategy
-**Status:** To be decided during implementation.
+**Status: Partially implemented** - Unit tests for utils completed.
 
-**Considerations:**
+**Current implementation:**
+- Jest with ts-jest for TypeScript support
+- Unit tests in `tests/unit/` with mocked dependencies
+- Arrange-Act-Assert pattern (blank lines, no comments)
+- Coverage: 33 passing tests for imageValidation and fileSystem utils
+- Test fixtures in `tests/fixtures/images/`
+- Mocked file system operations and logger
+
+**Remaining work:**
 - WhatsApp client mocking strategy (abstract behind interface)
-- Integration test database (separate Postgres container?)
-- Image fixture handling (test images in `tests/fixtures/`)
-- Jest configuration for async handlers
-
-**Likely approach:**
-- Unit tests: Mock WhatsApp client, test handlers/services
-- Integration tests: Real Postgres, mock WhatsApp
+- Integration test database (separate Postgres container)
+- Service layer tests (imageService)
+- Handler tests with mocked WhatsApp client
 - E2E tests: Manual testing in test group chat
 
 ### Backup Strategy

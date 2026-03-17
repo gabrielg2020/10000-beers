@@ -1,5 +1,5 @@
 ## Current work
-Set up image storing
+Next: Implement beer submission handler to process WhatsApp images using imageService
 
 ## Project
 A bot which will be deployed in a group chat with my friends called '10,000 beers'. The aim is to send a photo of a beer when you drink one. This bot should keep track of how many beers have been drunk and who drunk them.
@@ -7,13 +7,22 @@ This project uses TypeScript with a SQLite database. It's in very early developm
 
 ## Structure
 src/
-  index.ts           - App entry point
-  handlers/          - WhatsApp message handlers
-  services/          - Business logic (submissions, stats)
-  database/          - Database schema and migrations
-  utils/             - Logging, config, helpers
-docker-compose.yml   - Local and production setup
-Dockerfile           - Bot container image
+  index.ts               - App entry point
+  handlers/              - WhatsApp message handlers
+  services/
+    imageService.ts      - Image download, validation, storage, hashing
+  database/              - Database schema and migrations
+  utils/
+    logger.ts            - Pino logger configuration
+    imageValidation.ts   - Image format and size validation
+    fileSystem.ts        - File operations and error handling
+  types/
+    image.ts             - TypeScript types for image operations
+tests/
+  unit/                  - Unit tests with mocked dependencies
+  fixtures/images/       - Test image files
+docker-compose.yml       - Local and production setup
+Dockerfile               - Bot container image
 
 ## Tooling
 - Biome for linting and formatting (biome.json) - do not suggest ESLint or Prettier
@@ -24,6 +33,13 @@ Dockerfile           - Bot container image
 
 ## Utilities
 Always use existing utilities rather than duplicating logic:
+- `imageService.processImage()` - Download, validate, store images from WhatsApp
+- `imageService.calculateHash()` - SHA256 hash for duplicate detection
+- `validateMimetype()` - Check image format (JPEG, PNG, WebP, GIF)
+- `validateFileSize()` - Check image size limits
+- `validateImageBuffer()` - Verify image file integrity
+- `generateImageFilename()` - Create unique timestamped filenames
+- `logger` - Pino structured logging (info, debug, warn, error)
 
 ## Code style
 - Tabs for indentation
