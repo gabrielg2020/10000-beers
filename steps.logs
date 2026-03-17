@@ -1,0 +1,4 @@
+1. Set up Docker + docker-compose (Postgres + pgAdmin)
+  2. Create Prisma schema based on domain model
+  3. Set up Pino logging configuration
+  4. Create .env.example file with all required variables

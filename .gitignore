@@ -1,0 +1,17 @@
+node_modules/
+dist/
+*.log
+.env
+.env.local
+.DS_Store
+.wwebjs_auth/
+.wwebjs_cache/
+
+# Docker volumes and data
+pgdata/
+images/
+*.sql
+
+# Testing
+coverage/
+.nyc_output/

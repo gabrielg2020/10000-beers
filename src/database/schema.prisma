@@ -1,0 +1,48 @@
+// Prisma schema for 10,000 Beers bot
+// See docs/domain.md for business rules and data model details
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id          String   @id @default(uuid())
+  whatsappId  String   @unique @map("whatsapp_id")
+  displayName String   @map("display_name")
+  nickname    String?
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  beers Beer[]
+
+  @@map("users")
+}
+
+model Beer {
+  id                       String    @id @default(uuid())
+  userId                   String    @map("user_id")
+  submittedAt              DateTime  @default(now()) @map("submitted_at")
+  imagePath                String    @map("image_path")
+  imageHash                String?   @map("image_hash")
+  beerType                 BeerType? @map("beer_type")
+  classificationConfidence Float?    @map("classification_confidence")
+  isVerified               Boolean   @default(false) @map("is_verified")
+  notes                    String?
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("beers")
+  @@index([userId])
+  @@index([submittedAt])
+  @@index([imageHash])
+}
+
+enum BeerType {
+  can
+  bottle
+  draught
+}
