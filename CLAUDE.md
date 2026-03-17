@@ -1,5 +1,5 @@
 ## Current work
-Setting up foundation: Docker, Postgres, database schema, and logging infrastructure.
+Set up image storing
 
 ## Project
 A bot which will be deployed in a group chat with my friends called '10,000 beers'. The aim is to send a photo of a beer when you drink one. This bot should keep track of how many beers have been drunk and who drunk them.
