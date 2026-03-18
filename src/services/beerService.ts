@@ -70,19 +70,7 @@ export class BeerService {
         'Image processed'
       )
 
-      // Step 4: AI validation
-      const aiResult = await aiService.classifyBeer(imageResult.imagePath);
-      if (!aiResult.isValid) {
-        await imageService.deleteImage(imageResult.imagePath);
-
-        throw new BeerSubmissionError(
-          `AI rejected beer submission: ${aiResult.error}`,
-          'AI_VALIDATION_FAILED',
-          "Doesn't look like a beer to me 🤔",
-        );
-      }
-
-      // Step 5: Check for duplicate submissions
+      // Step 4: Check for duplicate submissions
       const duplicateCheck = await this.checkDuplicate(
         userInfo.id,
         imageResult.imageHash,
@@ -94,6 +82,18 @@ export class BeerService {
           `Duplicate beer submission detected for user ${userInfo.id}`,
           'DUPLICATE_SUBMISSION',
           "You've already submitted this beer",
+        );
+      }
+
+      // Step 5: AI validation
+      const aiResult = await aiService.classifyBeer(imageResult.imagePath);
+      if (!aiResult.isValid) {
+        await imageService.deleteImage(imageResult.imagePath);
+
+        throw new BeerSubmissionError(
+          `AI rejected beer submission: ${aiResult.error}`,
+          'AI_VALIDATION_FAILED',
+          "",
         );
       }
 
@@ -123,9 +123,7 @@ export class BeerService {
       );
 
       // Step 8: Build sucess message
-      const message = this.replyOnSubmission
-        ? `Beer #${totalCount} logged for @${displayName}! 🍺`
-        : '';
+      const message = `Beer #${totalCount} logged for @${displayName}! 🍺`;
 
       return {
         success: true,
@@ -147,6 +145,62 @@ export class BeerService {
         'Failed to save your beer, please try again',
       );
     }
+  }
+
+  async removeLastBeer(whatsappId: string): Promise<{ success: boolean; displayName: string; beerId: string }> {
+    logger.debug({ whatsappId }, 'Looking up user for beer removal');
+
+    const user = await prisma.user.findUnique({
+      where: { whatsappId },
+      include: {
+        beers: {
+          orderBy: { submittedAt: 'desc' },
+          take: 1,
+        },
+      },
+    });
+
+    if (!user) {
+      logger.warn({ whatsappId }, 'User not found for beer removal');
+
+      const allUsers = await prisma.user.findMany({
+        select: { whatsappId: true, displayName: true },
+      });
+      logger.debug({ allUsers, searchedId: whatsappId }, 'All users in database');
+
+      throw new BeerSubmissionError(
+        'User not found',
+        'USER_NOT_FOUND',
+        'User not found',
+      );
+    }
+
+    if (user.beers.length === 0) {
+      throw new BeerSubmissionError(
+        'No beers to remove',
+        'NO_BEERS',
+        'This user has no beers to remove',
+      );
+    }
+
+    const lastBeer = user.beers[0];
+
+    await imageService.deleteImage(lastBeer.imagePath);
+
+    await prisma.beer.delete({
+      where: { id: lastBeer.id },
+    });
+
+    logger.info(
+      { beerId: lastBeer.id, userId: user.id, whatsappId },
+      'Beer removed successfully',
+    );
+
+    return {
+      success: true,
+      displayName: user.displayName,
+      beerId: lastBeer.id,
+    };
   }
 }
 

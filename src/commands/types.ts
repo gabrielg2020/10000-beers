@@ -17,5 +17,6 @@ export interface Command {
   readonly name: string;
   readonly aliases: string[];
   readonly description: string;
+  readonly adminOnly?: boolean;
   execute(context: CommandContext): Promise<CommandResult>;
 }

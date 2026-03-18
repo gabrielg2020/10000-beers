@@ -56,6 +56,15 @@ export class MessageHandler {
         return;
       }
 
+      // Step 5a: Silently ignore non-JPEG images
+      if (media.mimetype !== 'image/jpeg') {
+        logger.debug(
+          { mimetype: media.mimetype, from: whatsappId },
+          'Ignoring non-JPEG image',
+        );
+        return;
+      }
+
       // Step 6: Convert MessageMedia to our custom type
       const imageData: BeerImageData = {
         data: media.data,
@@ -80,7 +89,9 @@ export class MessageHandler {
       }
     } catch (error) {
       if (error instanceof BeerSubmissionError) {
-        await message.reply(error.userMessage);
+        if (error.userMessage) {
+          await message.reply(error.userMessage);
+        }
         logger.warn(
           { code: error.code, message: error.message },
           'Beer submission rejected',

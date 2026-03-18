@@ -1,19 +1,14 @@
 import type { ImageValidationResult } from '../types/image';
 
-const ALLOWED_MIMETYPES = [
-	'image/jpeg',
-	'image/png',
-	'image/webp',
-	'image/gif',
-];
+const ALLOWED_MIMETYPES = ['image/jpeg'];
 
-const ALLOWED_EXTENSIONS = ['jpeg', 'jpg', 'png', 'webp', 'gif'];
+const ALLOWED_EXTENSIONS = ['jpeg', 'jpg'];
 
 export function validateMimetype(mimetype: string): ImageValidationResult {
 	if (!ALLOWED_MIMETYPES.includes(mimetype)) {
 		return {
 			isValid: false,
-			error: `Invalid image format. Allowed: JPEG, PNG, WebP, GIF`,
+			error: `Invalid image format. Only JPEG images are allowed`,
 		};
 	}
 	return { isValid: true };
@@ -42,37 +37,28 @@ export function validateFileSize(
 export function getExtensionFromMimetype(mimetype: string): string {
 	const mimetypeMap: Record<string, string> = {
 		'image/jpeg': 'jpg',
-		'image/png': 'png',
-		'image/webp': 'webp',
-		'image/gif': 'gif',
 	};
 	return mimetypeMap[mimetype] || 'jpg';
 }
 
 export function validateImageBuffer(buffer: Buffer): ImageValidationResult {
-	// Check for common image file signatures
-	const signatures = {
-		jpeg: [0xff, 0xd8, 0xff],
-		png: [0x89, 0x50, 0x4e, 0x47],
-		webp: [0x52, 0x49, 0x46, 0x46], // RIFF header
-		gif: [0x47, 0x49, 0x46],
-	};
+	const jpegSignature = [0xff, 0xd8, 0xff];
 
-	let isValidFormat = false;
-	for (const [_, sig] of Object.entries(signatures)) {
-		if (buffer.length >= sig.length) {
-			const matches = sig.every((byte, index) => buffer[index] === byte);
-			if (matches) {
-				isValidFormat = true;
-				break;
-			}
-		}
-	}
-
-	if (!isValidFormat) {
+	if (buffer.length < jpegSignature.length) {
 		return {
 			isValid: false,
 			error: 'Image file is corrupt or invalid format',
+		};
+	}
+
+	const isValidJpeg = jpegSignature.every(
+		(byte, index) => buffer[index] === byte,
+	);
+
+	if (!isValidJpeg) {
+		return {
+			isValid: false,
+			error: 'Image file is corrupt or not a valid JPEG',
 		};
 	}
 
