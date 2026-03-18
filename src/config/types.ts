@@ -4,6 +4,7 @@ export interface AppConfig {
   storage: StorageConfig;
   bot: BotConfig;
   application: ApplicationConfig;
+  ai: AiConfig;
 }
 
 export interface DatabaseConfig {
@@ -23,6 +24,13 @@ export interface StorageConfig {
 export interface BotConfig {
   submissionCooldownMinutes: number;
   replyOnSubmission: boolean;
+}
+
+export interface AiConfig {
+  enabled: boolean;
+  confidenceThreshold: number;
+  geminiApiKey: string;
+  geminiModel: string;
 }
 
 export interface ApplicationConfig {

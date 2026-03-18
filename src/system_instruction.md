@@ -12,12 +12,14 @@ draught — beer served on tap, typically in a pint glass, tankard, or being pou
 
 Output Format
 Always respond with a valid JSON object and nothing else. No explanation, no markdown, no preamble.
-json{
+
+```json
+{
   "beer_detected": true | false,
   "type": "can" | "bottle" | "draught" | null,
-  "number": 1-20
   "confidence": 0.0–1.0
 }
+```
 
 Set "type" to null if "beer_detected" is false.
 "confidence" should reflect your certainty in the overall classification (0.0 = no confidence, 1.0 = certain).

@@ -38,10 +38,11 @@ Represents a single beer submission.
 
 **Business rules:**
 - Must have valid image (validated before save)
+- Must pass AI beer detection if enabled (Gemini API, confidence ≥ 0.9)
 - `submitted_at` defaults to message timestamp
-- `beer_type` initially null, populated by AI classification (future)
-- Cannot delete beers (data integrity), only mark as invalid
-- Duplicate image detection optional (via `image_hash`)
+- `beer_type` populated by AI classification (can, bottle, draught) if enabled
+- Cannot delete beers (data integrity), admin commands for removal (future)
+- Duplicate image detection via `image_hash` per user
 
 **Relationships:**
 - Many beers → one user
@@ -55,8 +56,8 @@ Classification of beer container/serving method.
 - `draught` - Draught/tap beer (includes pints in glasses)
 
 **Business rules:**
-- Field is nullable (unknown/pending classification)
-- AI classification added later (not blocking feature)
+- Field is nullable (classification disabled or unavailable)
+- AI classification via Gemini API (toggleable via AI_ENABLED config)
 - Manual override by admins possible (future)
 
 ### GroupStats (Optional)
@@ -82,6 +83,8 @@ Aggregate statistics cached for performance.
 1. **Valid submissions require:**
    - WhatsApp message with attached image
    - Image successfully downloads and saves
+   - Image passes format and size validation
+   - AI beer detection passes (if enabled: beer_detected=true, confidence≥0.9)
    - User is in the configured group chat
    - Cooldown period has passed (optional rate limiting)
 
@@ -116,7 +119,7 @@ Aggregate statistics cached for performance.
    - Total beers
    - Rank in group
    - First beer date
-   - Favourite beer type (when AI classification added)
+   - Favourite beer type (if AI classification enabled)
    - Average beers per week
 
 3. **Group stats:**
@@ -236,6 +239,8 @@ enum BeerType {
 ### Invalid Submissions
 - **No image attached:** Reply "Please attach a photo of your beer"
 - **Image download fails:** Reply "Failed to process image, please try again"
+- **AI rejects (not a beer or low confidence):** Reply "Doesn't look like a beer to me mate 🤔"
+- **AI API failure:** Auto-accept (fail-open to honour system)
 - **Duplicate image:** Reply "You've already submitted this beer"
 - **Rate limited:** Reply "Slow down! Wait X minutes before submitting another"
 - **Wrong group:** Bot ignores (no response)

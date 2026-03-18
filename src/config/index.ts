@@ -1,4 +1,5 @@
 import type {
+	AiConfig,
 	AppConfig,
 	ApplicationConfig,
 	BotConfig,
@@ -41,6 +42,15 @@ function validatePositiveInteger(value: number, fieldName: string): void {
 		throw new ConfigValidationError(
 			`${fieldName} must be a non-negative integer, got: ${value}`,
 			[fieldName],
+		);
+	}
+}
+
+function validateConfidenceThreshold(threshold: number): void {
+	if (threshold < 0 || threshold > 1) {
+		throw new ConfigValidationError(
+			`AI_CONFIDENCE_THRESHOLD must be between 0 and 1, got: ${threshold}`,
+			['AI_CONFIDENCE_THRESHOLD'],
 		);
 	}
 }
@@ -181,6 +191,30 @@ function loadBotConfig(): BotConfig {
 	};
 }
 
+function loadAiConfig(): AiConfig {
+	const enabled = getOptionalEnv('AI_ENABLED', 'false') === 'true';
+
+	const confidenceThreshold = Number.parseFloat(
+		getOptionalEnv('AI_CONFIDENCE_THRESHOLD', '0.9'),
+	);
+
+	validateConfidenceThreshold(confidenceThreshold);
+
+	// Only require API key if AI is enabled
+	const geminiApiKey = enabled
+		? getRequiredEnv('GEMINI_API_KEY')
+		: getOptionalEnv('GEMINI_API_KEY', '');
+
+	const geminiModel = getOptionalEnv('GEMINI_MODEL', 'gemini-1.5-flash');
+
+	return {
+		enabled,
+		confidenceThreshold,
+		geminiApiKey,
+		geminiModel,
+	};
+}
+
 function loadConfig(): AppConfig {
 	validateConfig();
 
@@ -190,6 +224,7 @@ function loadConfig(): AppConfig {
 		whatsapp: loadWhatsAppConfig(),
 		storage: loadStorageConfig(),
 		bot: loadBotConfig(),
+    ai: loadAiConfig(),
 	};
 }
 
@@ -202,5 +237,6 @@ export type {
 	DatabaseConfig,
 	StorageConfig,
 	WhatsAppConfig,
+  AiConfig,
 } from './types';
 export { ConfigValidationError } from './types';

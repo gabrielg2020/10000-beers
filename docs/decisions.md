@@ -341,30 +341,56 @@ src/
 ## Future Enhancements
 
 ### AI Image Classification
-**Plan:** Add computer vision to classify beer type (can, bottle, draught).
+**Decision:** Use Google Gemini API for beer detection and classification.
 
-**Approach options:**
-1. **Cloud API** (Google Vision, AWS Rekognition)
-   - Pros: Accurate, no model management
-   - Cons: Cost per image, external dependency, latency
+**Status:** Implemented - AI validation integrated into beer submission flow.
 
-2. **Open-source model** (ResNet, MobileNet with custom training)
-   - Pros: Free, runs locally, privacy
-   - Cons: Need training data, less accurate, resource intensive
+**Rationale:**
+- Gemini free tier provides generous API limits (sufficient for friend group usage)
+- Testing showed high accuracy (0.9-1.0 confidence scores)
+- Sub-2 second response times meet speed requirements
+- No model training or hosting required
+- Can classify beer type (can, bottle, draught) in single API call
+- Easily toggleable via environment variable for backwards compatibility
 
-3. **Hybrid** - Generic object detection + heuristics
-   - Detect "bottle", "can", "glass" objects
-   - Use context (shape, colour) for classification
+**Implementation:**
+- New `aiService` module handles Gemini API integration
+- System instruction defined in `src/system_instruction.md`
+- Validates beer detection, type classification, and confidence scoring
+- AI validation runs after image storage (allows admin override if false negative)
+- Auto-accept if AI feature disabled or on API failure (fail-open approach)
+- Confidence threshold configurable (default 0.9)
+- Gemini model configurable (default gemini-1.5-flash)
 
-**Implementation timing:**
-- After core features stable
-- Requires decision on queue system (processing might be slow)
-- Optional feature - honour system works initially
+**Configuration:**
+```
+AI_ENABLED=true                    # Toggle AI validation
+AI_CONFIDENCE_THRESHOLD=0.9        # Minimum confidence to accept
+GEMINI_API_KEY=...                 # API key for Gemini
+GEMINI_MODEL=gemini-1.5-flash      # Gemini model to use
+```
 
-**Data model impact:**
-- Add `beer_type` enum field: 'can' | 'bottle' | 'draught' | 'unknown'
-- Add `classification_confidence` float field
-- Allow manual override by admins
+**Validation flow:**
+1. Image downloaded and validated (format, size)
+2. Image stored to disk (allows admin approval if AI rejects)
+3. AI validation via Gemini API
+4. If `beer_detected === true` AND `confidence >= threshold` → accept and store beer_type
+5. Store `beer_type` and `classification_confidence` in database
+6. If validation fails or API errors → auto-accept (honour system fallback)
+
+**Rejection message:**
+- "Doesn't look like a beer to me mate 🤔"
+
+**Future enhancements:**
+- Admin commands to override AI decisions (delete/approve submissions)
+- Confidence score analytics for threshold tuning
+- Fallback to alternative AI providers
+
+**Alternatives considered:**
+1. **Google Vision API** - More expensive, less tailored to beer detection
+2. **AWS Rekognition** - Requires AWS account setup, higher complexity
+3. **Open-source models** - Requires training data, hosting, less accurate
+4. **Manual verification** - Too slow, requires admin intervention for each submission
 
 ### Historical Data Import
 **Plan:** One-time import of beers submitted before bot was active.

@@ -2,6 +2,7 @@ import { config } from "../config";
 import { prisma } from "../database";
 import { BeerSubmissionError, BeerSubmissionRequest, BeerSubmissionResult, DuplicateCheckResult } from "../types/submission";
 import { logger } from "../utils/logger";
+import { aiService } from "./aiService";
 import { imageService } from "./imageService";
 import { userService } from "./userService";
 import { MessageMedia } from "whatsapp-web.js";
@@ -66,10 +67,22 @@ export class BeerService {
       const imageResult = await imageService.processImage(messageMedia, userInfo.id);
       logger.debug(
         { imagePath: imageResult.imagePath, hash: imageResult.imageHash },
-        'Image prcessed'
+        'Image processed'
       )
 
-      // Step 4: Check for duplicate submissions
+      // Step 4: AI validation
+      const aiResult = await aiService.classifyBeer(imageResult.imagePath);
+      if (!aiResult.isValid) {
+        await imageService.deleteImage(imageResult.imagePath);
+
+        throw new BeerSubmissionError(
+          `AI rejected beer submission: ${aiResult.error}`,
+          'AI_VALIDATION_FAILED',
+          "Doesn't look like a beer to me 🤔",
+        );
+      }
+
+      // Step 5: Check for duplicate submissions
       const duplicateCheck = await this.checkDuplicate(
         userInfo.id,
         imageResult.imageHash,
@@ -84,17 +97,19 @@ export class BeerService {
         );
       }
 
-      // Step 5: Create beer record in database
+      // Step 6: Create beer record in database
       const beer = await prisma.beer.create({
         data: {
           userId: userInfo.id,
           submittedAt,
           imagePath: imageResult.imagePath,
           imageHash: imageResult.imageHash,
+          beerType: aiResult.beerType,
+          classificationConfidence: aiResult.confidence
         },
       });
 
-      // Step 6. Get total beer count for response
+      // Step 7. Get total beer count for response
       const totalCount = await userService.getTotalBeerCount();
 
       logger.info(
@@ -107,7 +122,7 @@ export class BeerService {
         'Beer submitted successfully',
       );
 
-      // Step 7: Build sucess message
+      // Step 8: Build sucess message
       const message = this.replyOnSubmission
         ? `Beer #${totalCount} logged for @${displayName}! 🍺`
         : '';

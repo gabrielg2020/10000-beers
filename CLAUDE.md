@@ -14,6 +14,7 @@ src/
   handlers/
     messageHandler.ts    - WhatsApp message routing and beer submission
   services/
+    aiService.ts         - Gemini AI beer detection and classification
     imageService.ts      - Image download, validation, storage, hashing
     userService.ts       - User creation and lookup
     beerService.ts       - Beer submission and duplicate detection
@@ -29,10 +30,11 @@ src/
     submission.ts        - Beer submission types
 tests/
   unit/
-    services/            - Service layer tests (userService, beerService)
+    services/            - Service layer tests (userService, beerService, aiService)
     handlers/            - Message handler tests
     utils/               - Utility function tests
   fixtures/images/       - Test image files
+system_instruction.md    - Gemini AI prompt for beer detection
 docker-compose.yml       - Local and production setup
 Dockerfile               - Bot container image
 
@@ -47,10 +49,11 @@ Dockerfile               - Bot container image
 Always use existing services and utilities rather than duplicating logic:
 
 **Services:**
+- `aiService.classifyBeer()` - Gemini API beer detection (returns isValid, beerType, confidence)
 - `userService.findOrCreateUser()` - Find or create user, update display name
 - `userService.getUserBeerCount()` - Get beer count for specific user
 - `userService.getTotalBeerCount()` - Get total beer count across all users
-- `beerService.submitBeer()` - Full beer submission flow (validation, storage, DB)
+- `beerService.submitBeer()` - Full beer submission flow (validation, storage, AI check, DB)
 - `beerService.checkDuplicate()` - Check for duplicate image submissions
 - `imageService.processImage()` - Download, validate, store images from WhatsApp
 - `imageService.calculateHash()` - SHA256 hash for duplicate detection
@@ -63,6 +66,7 @@ Always use existing services and utilities rather than duplicating logic:
   - `config.whatsapp.*` - Group ID, admin IDs
   - `config.storage.*` - Image path, max size
   - `config.bot.*` - Cooldown minutes, reply behaviour
+  - `config.ai.*` - AI enabled flag, confidence threshold, Gemini API key, model name
 
 **Utilities:**
 - `validateMimetype()` - Check image format (JPEG, PNG, WebP, GIF)
@@ -84,12 +88,17 @@ Always use existing services and utilities rather than duplicating logic:
 ## Testing
 - Arrange-Act-Assert pattern (no comments, just blank lines between sections)
 - Unit tests (tests/unit/) - business logic with mocked dependencies
-- 62 tests passing (services, handlers, utils)
+- 74 tests passing (services, handlers, utils, AI service)
 - Jest with ts-jest for TypeScript support
-- All dependencies mocked (Prisma, WhatsApp client, file system)
+- All dependencies mocked (Prisma, WhatsApp client, file system, Gemini API)
 - Required env vars set in tests/setup.ts for config module
 
 ## Security
+
+## Planned features
+- Admin deletion commands: `/remove @user last` or `/remove [beer_id]` to handle false positives or mistakes
+- Stats commands: `!stats`, `!leaderboard`, `!mystats`
+- Milestone celebrations (100, 500, 1000, 5000, 10000 beers)
 
 ## Do not
 - Rewrite existing working fuctions unless asked

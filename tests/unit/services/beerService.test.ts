@@ -1,11 +1,13 @@
 process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
 process.env.WHATSAPP_GROUP_ID = '123456789@g.us';
 process.env.REPLY_ON_SUBMISSION = 'true';
+process.env.AI_ENABLED = 'false';
 
 import { beerService } from '../../../src/services/beerService';
 import { prisma } from '../../../src/database/client';
 import { imageService } from '../../../src/services/imageService';
 import { userService } from '../../../src/services/userService';
+import { aiService } from '../../../src/services/aiService';
 import { BeerSubmissionError } from '../../../src/types/submission';
 import type { BeerSubmissionRequest } from '../../../src/types/submission';
 import { MessageMedia } from 'whatsapp-web.js';
@@ -30,6 +32,12 @@ jest.mock('../../../src/services/userService', () => ({
 	userService: {
 		findOrCreateUser: jest.fn(),
 		getTotalBeerCount: jest.fn(),
+	},
+}));
+
+jest.mock('../../../src/services/aiService', () => ({
+	aiService: {
+		classifyBeer: jest.fn(),
 	},
 }));
 
@@ -110,16 +118,24 @@ describe('BeerService', () => {
 				imageHash: 'hash123',
 				sizeBytes: 1024,
 			};
+			const aiResult = {
+				isValid: true,
+				beerType: 'can' as const,
+				confidence: 0.95,
+			};
 			const beer = {
 				id: 'beer-789',
 				userId: userInfo.id,
 				submittedAt: request.submittedAt,
 				imagePath: imageResult.imagePath,
 				imageHash: imageResult.imageHash,
+				beerType: 'can',
+				classificationConfidence: 0.95,
 			};
 
 			(userService.findOrCreateUser as jest.Mock).mockResolvedValue(userInfo);
 			(imageService.processImage as jest.Mock).mockResolvedValue(imageResult);
+			(aiService.classifyBeer as jest.Mock).mockResolvedValue(aiResult);
 			(prisma.beer.findFirst as jest.Mock).mockResolvedValue(null);
 			(prisma.beer.create as jest.Mock).mockResolvedValue(beer);
 			(userService.getTotalBeerCount as jest.Mock).mockResolvedValue(100);
@@ -131,12 +147,15 @@ describe('BeerService', () => {
 				request.displayName,
 			);
 			expect(imageService.processImage).toHaveBeenCalled();
+			expect(aiService.classifyBeer).toHaveBeenCalledWith(imageResult.imagePath);
 			expect(prisma.beer.create).toHaveBeenCalledWith({
 				data: {
 					userId: userInfo.id,
 					submittedAt: request.submittedAt,
 					imagePath: imageResult.imagePath,
 					imageHash: imageResult.imageHash,
+					beerType: 'can',
+					classificationConfidence: 0.95,
 				},
 			});
 			expect(result).toEqual({
@@ -160,6 +179,11 @@ describe('BeerService', () => {
 				imageHash: 'hash123',
 				sizeBytes: 1024,
 			};
+			const aiResult = {
+				isValid: true,
+				beerType: 'bottle' as const,
+				confidence: 0.92,
+			};
 			const existingBeer = {
 				id: 'beer-456',
 				submittedAt: new Date('2026-03-01'),
@@ -167,6 +191,7 @@ describe('BeerService', () => {
 
 			(userService.findOrCreateUser as jest.Mock).mockResolvedValue(userInfo);
 			(imageService.processImage as jest.Mock).mockResolvedValue(imageResult);
+			(aiService.classifyBeer as jest.Mock).mockResolvedValue(aiResult);
 			(prisma.beer.findFirst as jest.Mock).mockResolvedValue(existingBeer);
 
 			await expect(beerService.submitBeer(request)).rejects.toThrow(
@@ -200,16 +225,24 @@ describe('BeerService', () => {
 				imageHash: 'hash123',
 				sizeBytes: 1024,
 			};
+			const aiResult = {
+				isValid: true,
+				beerType: 'draught' as const,
+				confidence: 0.88,
+			};
 			const beer = {
 				id: 'beer-789',
 				userId: userInfo.id,
 				submittedAt: request.submittedAt,
 				imagePath: imageResult.imagePath,
 				imageHash: imageResult.imageHash,
+				beerType: 'draught',
+				classificationConfidence: 0.88,
 			};
 
 			(userService.findOrCreateUser as jest.Mock).mockResolvedValue(userInfo);
 			(imageService.processImage as jest.Mock).mockResolvedValue(imageResult);
+			(aiService.classifyBeer as jest.Mock).mockResolvedValue(aiResult);
 			(prisma.beer.findFirst as jest.Mock).mockResolvedValue(null);
 			(prisma.beer.create as jest.Mock).mockResolvedValue(beer);
 			(userService.getTotalBeerCount as jest.Mock).mockResolvedValue(100);
@@ -250,16 +283,24 @@ describe('BeerService', () => {
 				imageHash: 'hash123',
 				sizeBytes: 1024,
 			};
+			const aiResult = {
+				isValid: true,
+				beerType: 'can' as const,
+				confidence: 0.97,
+			};
 			const beer = {
 				id: 'beer-first',
 				userId: userInfo.id,
 				submittedAt: request.submittedAt,
 				imagePath: imageResult.imagePath,
 				imageHash: imageResult.imageHash,
+				beerType: 'can',
+				classificationConfidence: 0.97,
 			};
 
 			(userService.findOrCreateUser as jest.Mock).mockResolvedValue(userInfo);
 			(imageService.processImage as jest.Mock).mockResolvedValue(imageResult);
+			(aiService.classifyBeer as jest.Mock).mockResolvedValue(aiResult);
 			(prisma.beer.findFirst as jest.Mock).mockResolvedValue(null);
 			(prisma.beer.create as jest.Mock).mockResolvedValue(beer);
 			(userService.getTotalBeerCount as jest.Mock).mockResolvedValue(1);
@@ -268,6 +309,128 @@ describe('BeerService', () => {
 
 			expect(result.success).toBe(true);
 			expect(result.beerNumber).toBe(1);
+		});
+
+		it('should reject when AI validation fails', async () => {
+			const request = createMockRequest();
+			const userInfo = {
+				id: 'user-123',
+				whatsappId: request.whatsappId,
+				displayName: request.displayName,
+				isNewUser: false,
+			};
+			const imageResult = {
+				imagePath: '/data/images/beer.jpg',
+				imageHash: 'hash123',
+				sizeBytes: 1024,
+			};
+			const aiResult = {
+				isValid: false,
+				beerType: null,
+				confidence: 0.6,
+				error: 'No beer detected in image',
+			};
+
+			(userService.findOrCreateUser as jest.Mock).mockResolvedValue(userInfo);
+			(imageService.processImage as jest.Mock).mockResolvedValue(imageResult);
+			(aiService.classifyBeer as jest.Mock).mockResolvedValue(aiResult);
+
+			await expect(beerService.submitBeer(request)).rejects.toThrow(
+				BeerSubmissionError,
+			);
+
+			try {
+				await beerService.submitBeer(request);
+			} catch (error) {
+				expect((error as BeerSubmissionError).userMessage).toBe(
+					"Doesn't look like a beer to me mate 🤔",
+				);
+				expect((error as BeerSubmissionError).code).toBe('AI_VALIDATION_FAILED');
+			}
+
+			expect(imageService.deleteImage).toHaveBeenCalledWith(imageResult.imagePath);
+			expect(prisma.beer.create).not.toHaveBeenCalled();
+		});
+
+		it('should store null beer type when AI is disabled', async () => {
+			const request = createMockRequest();
+			const userInfo = {
+				id: 'user-123',
+				whatsappId: request.whatsappId,
+				displayName: request.displayName,
+				isNewUser: false,
+			};
+			const imageResult = {
+				imagePath: '/data/images/beer.jpg',
+				imageHash: 'hash123',
+				sizeBytes: 1024,
+			};
+			const aiResult = {
+				isValid: true,
+				beerType: null,
+				confidence: 1.0,
+			};
+			const beer = {
+				id: 'beer-789',
+				userId: userInfo.id,
+				submittedAt: request.submittedAt,
+				imagePath: imageResult.imagePath,
+				imageHash: imageResult.imageHash,
+				beerType: null,
+				classificationConfidence: 1.0,
+			};
+
+			(userService.findOrCreateUser as jest.Mock).mockResolvedValue(userInfo);
+			(imageService.processImage as jest.Mock).mockResolvedValue(imageResult);
+			(aiService.classifyBeer as jest.Mock).mockResolvedValue(aiResult);
+			(prisma.beer.findFirst as jest.Mock).mockResolvedValue(null);
+			(prisma.beer.create as jest.Mock).mockResolvedValue(beer);
+			(userService.getTotalBeerCount as jest.Mock).mockResolvedValue(100);
+
+			const result = await beerService.submitBeer(request);
+
+			expect(prisma.beer.create).toHaveBeenCalledWith({
+				data: {
+					userId: userInfo.id,
+					submittedAt: request.submittedAt,
+					imagePath: imageResult.imagePath,
+					imageHash: imageResult.imageHash,
+					beerType: null,
+					classificationConfidence: 1.0,
+				},
+			});
+			expect(result.success).toBe(true);
+		});
+
+		it('should delete image when AI validation fails', async () => {
+			const request = createMockRequest();
+			const userInfo = {
+				id: 'user-123',
+				whatsappId: request.whatsappId,
+				displayName: request.displayName,
+				isNewUser: false,
+			};
+			const imageResult = {
+				imagePath: '/data/images/beer.jpg',
+				imageHash: 'hash123',
+				sizeBytes: 1024,
+			};
+			const aiResult = {
+				isValid: false,
+				beerType: null,
+				confidence: 0.5,
+				error: 'Classification confidence too low',
+			};
+
+			(userService.findOrCreateUser as jest.Mock).mockResolvedValue(userInfo);
+			(imageService.processImage as jest.Mock).mockResolvedValue(imageResult);
+			(aiService.classifyBeer as jest.Mock).mockResolvedValue(aiResult);
+
+			await expect(beerService.submitBeer(request)).rejects.toThrow();
+
+			expect(imageService.deleteImage).toHaveBeenCalledWith(imageResult.imagePath);
+			expect(prisma.beer.findFirst).not.toHaveBeenCalled();
+			expect(prisma.beer.create).not.toHaveBeenCalled();
 		});
 	});
 });

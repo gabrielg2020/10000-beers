@@ -7,6 +7,7 @@ import { prisma } from './database';
 import { messageHandler } from './handlers/messageHandler';
 import fs from 'node:fs';
 import path from 'node:path';
+import { aiService } from './services/aiService';
 
 let client: Client | null = null;
 const SESSION_PATH = '.wwebjs_auth/session';
@@ -57,6 +58,14 @@ async function initialise() {
 		logger.error({ error }, 'Failed to initialise image service');
 		process.exit(1);
 	}
+
+  try {
+    await aiService.initialise();
+    logger.info('AI service ready');
+  } catch(error) {
+    logger.error({ error }, 'Failed to initialise AI service');
+    process.exit(1);
+  }
 
 	client = new Client({
 		authStrategy: new LocalAuth(),
