@@ -9,6 +9,9 @@ export const logger = pino({
 			return { level: label };
 		},
 	},
+	serializers: {
+		error: pino.stdSerializers.err,
+	},
 	timestamp: pino.stdTimeFunctions.isoTime,
 	...(isDevelopment && {
 		transport: {

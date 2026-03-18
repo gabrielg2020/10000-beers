@@ -78,6 +78,42 @@
 - Cloud storage needed if multiple instances or off-site backup
 - CDN if serving images to web interface
 
+### Beer Submission System
+**Decision:** Implement full beer submission flow with user management and duplicate detection.
+
+**Status: Completed** - Core beer submission functionality implemented.
+
+**Implementation:**
+- **User Service** - Automatic user creation on first submission, display name sync
+- **Beer Service** - Full submission flow with duplicate detection via image hash
+- **Message Handler** - WhatsApp integration with group filtering and error handling
+- **Type Safety** - Custom types for submissions, decoupled from WhatsApp library
+- **Error Handling** - User-friendly error messages with detailed logging
+- **Graceful Shutdown** - Proper cleanup of Puppeteer browser and database connections
+- **Configuration** - Environment-based (REPLY_ON_SUBMISSION, WHATSAPP_GROUP_ID)
+
+**Files:**
+- `src/services/userService.ts` - User management (find/create, beer counts)
+- `src/services/beerService.ts` - Beer submission logic and duplicate detection
+- `src/handlers/messageHandler.ts` - WhatsApp message processing
+- `src/types/submission.ts` - Submission types and custom errors
+- `src/index.ts` - App initialization with graceful shutdown
+- `tests/unit/services/` - Service layer tests (14 tests)
+- `tests/unit/handlers/` - Handler tests (14 tests)
+
+**Features:**
+- Automatic user creation and display name updates
+- SHA256-based duplicate detection per user
+- Image cleanup on duplicate rejection
+- Configurable reply behaviour
+- Group-specific message filtering
+- Comprehensive error handling and logging
+
+**Future enhancements:**
+- Rate limiting per user
+- Milestone celebrations (100, 500, 1000 beers)
+- Stats commands (!stats, !leaderboard)
+
 ### Concurrency: Async Handlers (No Queue)
 **Decision:** Use simple async message handlers without a queue system.
 
@@ -333,22 +369,23 @@ src/
 - Test whatsapp-web.js message history access
 
 ### Testing Strategy
-**Status: Partially implemented** - Unit tests for utils completed.
+**Status: Implemented** - Comprehensive unit test coverage.
 
 **Current implementation:**
 - Jest with ts-jest for TypeScript support
 - Unit tests in `tests/unit/` with mocked dependencies
 - Arrange-Act-Assert pattern (blank lines, no comments)
-- Coverage: 33 passing tests for imageValidation and fileSystem utils
+- Coverage: 63 passing tests across services, handlers, and utils
 - Test fixtures in `tests/fixtures/images/`
-- Mocked file system operations and logger
+- Mocked dependencies: Prisma, WhatsApp client, file system, logger
+- Service tests: userService (7 tests), beerService (7 tests)
+- Handler tests: messageHandler (14 tests)
+- Utility tests: imageValidation, fileSystem (35 tests)
 
-**Remaining work:**
-- WhatsApp client mocking strategy (abstract behind interface)
-- Integration test database (separate Postgres container)
-- Service layer tests (imageService)
-- Handler tests with mocked WhatsApp client
-- E2E tests: Manual testing in test group chat
+**Future work:**
+- Integration tests with real Postgres database
+- E2E tests with test WhatsApp group
+- Performance testing for concurrent submissions
 
 ### Backup Strategy
 **Status:** To be decided before production deployment.

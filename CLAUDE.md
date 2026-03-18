@@ -1,25 +1,34 @@
 ## Current work
-Next: Implement beer submission handler to process WhatsApp images using imageService
+Next: Implement centralised configuration module
 
 ## Project
 A bot which will be deployed in a group chat with my friends called '10,000 beers'. The aim is to send a photo of a beer when you drink one. This bot should keep track of how many beers have been drunk and who drunk them.
-This project uses TypeScript with a SQLite database. It's in very early development and not yet in production.
+This project uses TypeScript with Postgres database. Core beer submission functionality is implemented.
 
 ## Structure
 src/
-  index.ts               - App entry point
-  handlers/              - WhatsApp message handlers
+  index.ts               - App entry point with graceful shutdown
+  handlers/
+    messageHandler.ts    - WhatsApp message routing and beer submission
   services/
     imageService.ts      - Image download, validation, storage, hashing
-  database/              - Database schema and migrations
+    userService.ts       - User creation and lookup
+    beerService.ts       - Beer submission and duplicate detection
+  database/
+    schema.prisma        - Prisma schema (User, Beer models)
+    client.ts            - Prisma client with query logging
   utils/
     logger.ts            - Pino logger configuration
     imageValidation.ts   - Image format and size validation
     fileSystem.ts        - File operations and error handling
   types/
-    image.ts             - TypeScript types for image operations
+    image.ts             - Image operation types
+    submission.ts        - Beer submission types
 tests/
-  unit/                  - Unit tests with mocked dependencies
+  unit/
+    services/            - Service layer tests (userService, beerService)
+    handlers/            - Message handler tests
+    utils/               - Utility function tests
   fixtures/images/       - Test image files
 docker-compose.yml       - Local and production setup
 Dockerfile               - Bot container image
@@ -31,10 +40,20 @@ Dockerfile               - Bot container image
 - Postgres 16 (via Docker) with Prisma ORM
 - Winston or Pino for structured logging
 
-## Utilities
-Always use existing utilities rather than duplicating logic:
+## Services and Utilities
+Always use existing services and utilities rather than duplicating logic:
+
+**Services:**
+- `userService.findOrCreateUser()` - Find or create user, update display name
+- `userService.getUserBeerCount()` - Get beer count for specific user
+- `userService.getTotalBeerCount()` - Get total beer count across all users
+- `beerService.submitBeer()` - Full beer submission flow (validation, storage, DB)
+- `beerService.checkDuplicate()` - Check for duplicate image submissions
 - `imageService.processImage()` - Download, validate, store images from WhatsApp
 - `imageService.calculateHash()` - SHA256 hash for duplicate detection
+- `messageHandler.handleMessage()` - Process WhatsApp messages for beer submissions
+
+**Utilities:**
 - `validateMimetype()` - Check image format (JPEG, PNG, WebP, GIF)
 - `validateFileSize()` - Check image size limits
 - `validateImageBuffer()` - Verify image file integrity
@@ -54,7 +73,9 @@ Always use existing utilities rather than duplicating logic:
 ## Testing
 - Arrange-Act-Assert pattern (no comments, just blank lines between sections)
 - Unit tests (tests/unit/) - business logic with mocked dependencies
-- Separate test database for integration tests
+- 63 tests passing (services, handlers, utils)
+- Jest with ts-jest for TypeScript support
+- All dependencies mocked (Prisma, WhatsApp client, file system)
 
 ## Security
 

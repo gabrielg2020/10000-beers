@@ -1,20 +1,10 @@
 import { MessageMedia } from "whatsapp-web.js";
-import { ImageDownloadResult, ImageStorageResult, ImageValidationResult } from "../types/image";
+import { ImageDownloadResult, ImageServiceError, ImageStorageResult, ImageValidationResult } from "../types/image";
 import { deleteImageFile, ensureDirectoryExists, generateImageFilename, writeImageFile } from "../utils/fileSystem";
-import { getExtentionFromMimetype, validateFileSize, validateImageBuffer, validateMimetype } from "../utils/imageValidation";
+import { getExtensionFromMimetype, validateFileSize, validateImageBuffer, validateMimetype } from "../utils/imageValidation";
 import { logger } from "../utils/logger";
 import path from "node:path";
 import crypto from "node:crypto";
-
-export class ImageServiceError extends Error {
-  constructor(
-    message: string,
-    public readonly code: string,
-  ) {
-    super(message);
-    this.name = 'ImageServiceError';
-  }
-}
 
 export class ImageService {
   private readonly storagePath: string;
@@ -87,7 +77,7 @@ export class ImageService {
     mimetype: string,
     userId: string,
   ): Promise<ImageStorageResult> {
-    const extension = getExtentionFromMimetype(mimetype);
+    const extension = getExtensionFromMimetype(mimetype);
     const filename = generateImageFilename(userId, extension);
     const fullPath = path.join(this.storagePath, filename);
 

@@ -21,3 +21,14 @@ export interface ImageMetadata {
   sizeBytes: string;
   downloadedAt: Date;
 }
+
+export class ImageServiceError extends Error {
+  constructor(
+    message: string,
+    public readonly code: string
+  ) {
+    super(message);
+    this.name = 'ImageServiceError';
+  }
+}
+
