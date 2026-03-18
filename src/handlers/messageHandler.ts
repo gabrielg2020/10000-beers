@@ -3,6 +3,7 @@ import { logger } from "../utils/logger";
 import { BeerImageData, BeerSubmissionError, BeerSubmissionRequest } from "../types/submission";
 import { beerService } from "../services/beerService";
 import { config } from "../config";
+import { commandHandler } from "./commandHandler";
 
 export class MessageHandler {
   private readonly groupId: string;
@@ -26,18 +27,24 @@ export class MessageHandler {
       return;
     }
 
-    // Step 2: Make sure we only process messages with images
+    // Step 2: Check if this is a command
+    if (message.body && commandHandler.isCommand(message.body)) {
+      await commandHandler.handleCommand(message);
+      return;
+    }
+
+    // Step 3: Make sure we only process messages with images
     if (!message.hasMedia) {
       return;
     }
 
     try {
-      // Step 3: Get contact information
+      // Step 4: Get contact information
       const contact = await message.getContact();
       const whatsappId = contact.id._serialized;
       const displayName = contact.pushname || contact.name || 'Unknown';
 
-      // Step 4: Download media
+      // Step 5: Download media
       const media = await message.downloadMedia();
 
       if (!media) {
@@ -49,14 +56,14 @@ export class MessageHandler {
         return;
       }
 
-      // Step 5: Convert MessageMedia to our custom type
+      // Step 6: Convert MessageMedia to our custom type
       const imageData: BeerImageData = {
         data: media.data,
         mimetype: media.mimetype,
         filename: media.filename ?? undefined,
       };
 
-      // Step 6: Build submission request
+      // Step 7: Build submission request
       const submissionRequest: BeerSubmissionRequest = {
         whatsappId,
         displayName,
@@ -65,7 +72,7 @@ export class MessageHandler {
         messageId: message.id._serialized,
       };
 
-      // Step 7: Submit and reply
+      // Step 8: Submit and reply
       const result = await beerService.submitBeer(submissionRequest);
 
       if (result.message) {

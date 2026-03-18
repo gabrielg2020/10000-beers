@@ -1,4 +1,4 @@
-import 'dotenv/config';
+import 'dotenv/config'; // KEEP FIRST
 import { Client, LocalAuth } from 'whatsapp-web.js';
 import qrcode from 'qrcode-terminal';
 import { logger } from './utils/logger';
@@ -8,10 +8,65 @@ import { messageHandler } from './handlers/messageHandler';
 import fs from 'node:fs';
 import path from 'node:path';
 import { aiService } from './services/aiService';
+import './commands' // KEEP LAST
 
 let client: Client | null = null;
-const SESSION_PATH = '.wwebjs_auth/session';
-const LOCK_FILE = path.join(SESSION_PATH, 'SingletonLock');
+const SESSION_PATH = '.wwebjs_auth/session-10000-beers';
+
+async function waitForChromeToClose(maxWaitMs = 8000) {
+	const startTime = Date.now();
+	let attemptCount = 0;
+	const { execSync } = await import('node:child_process');
+
+	while (Date.now() - startTime < maxWaitMs) {
+		try {
+			const result = execSync(`pgrep -f "chrome.*${SESSION_PATH}"`, { encoding: 'utf8' });
+
+			if (!result.trim()) {
+				logger.info('Chrome process closed successfully');
+				return true;
+			}
+
+			attemptCount++;
+			if (attemptCount % 3 === 0) {
+				logger.info(`Waiting for Chrome to close... (${Math.floor((Date.now() - startTime) / 1000)}s)`);
+			}
+			await new Promise((resolve) => setTimeout(resolve, 1000));
+		} catch (error) {
+			// pgrep returns exit code 1 when no processes found
+			logger.info('Chrome process closed successfully');
+			return true;
+		}
+	}
+
+	// Try graceful kill first (SIGTERM)
+	logger.warn('Chrome did not close gracefully - sending SIGTERM');
+	try {
+		execSync(`pkill -TERM -f "chrome.*${SESSION_PATH}"`);
+		await new Promise((resolve) => setTimeout(resolve, 3000));
+
+		// Check if it closed
+		try {
+			const result = execSync(`pgrep -f "chrome.*${SESSION_PATH}"`, { encoding: 'utf8' });
+			if (!result.trim()) {
+				logger.info('Chrome closed after SIGTERM');
+				return true;
+			}
+		} catch {
+			logger.info('Chrome closed after SIGTERM');
+			return true;
+		}
+
+		// Still running, force kill as last resort
+		logger.error('Chrome still running - using SIGKILL (session may be corrupted)');
+		execSync(`pkill -9 -f "chrome.*${SESSION_PATH}"`);
+		await new Promise((resolve) => setTimeout(resolve, 2000));
+	} catch (error) {
+		logger.debug('No Chrome processes to kill');
+	}
+
+	return true;
+}
 
 async function gracefulShutdown(signal: string) {
 	logger.info({ signal }, 'Shutdown signal received');
@@ -20,15 +75,9 @@ async function gracefulShutdown(signal: string) {
 		if (client) {
 			logger.info('Destroying WhatsApp client');
 			await client.destroy();
-
-			if (client.pupBrowser) {
-				await client.pupBrowser.close();
-			}
-		}
-
-		if (fs.existsSync(LOCK_FILE)) {
-			logger.debug('Removing Puppeteer lock file');
-			fs.unlinkSync(LOCK_FILE);
+			// Give Chrome time to actually close
+			logger.debug('Waiting for browser to fully close...');
+			await new Promise((resolve) => setTimeout(resolve, 2000));
 		}
 
 		logger.info('Disconnecting from database');
@@ -43,6 +92,10 @@ async function gracefulShutdown(signal: string) {
 }
 
 async function initialise() {
+	// Wait for any previous Chrome instance to fully close
+	logger.debug('Checking for existing Chrome processes...');
+	await waitForChromeToClose();
+
 	try {
 		await prisma.$connect();
 		logger.info('Database connected');
@@ -68,14 +121,19 @@ async function initialise() {
   }
 
 	client = new Client({
-		authStrategy: new LocalAuth(),
+		authStrategy: new LocalAuth({ clientId: '10000-beers' }),
 		puppeteer: {
 			headless: true,
 			args: ['--no-sandbox', '--disable-setuid-sandbox'],
 		},
 	});
 
+	client.on('loading_screen', (percent, message) => {
+		logger.info({ percent, message }, 'Loading session from storage');
+	});
+
 	client.on('qr', (qr) => {
+		logger.warn('No valid session found - QR code required');
 		logger.info('Scan the QR code below with WhatsApp:');
 		qrcode.generate(qr, { small: true });
 	});
@@ -85,7 +143,7 @@ async function initialise() {
 	});
 
 	client.on('authenticated', () => {
-		logger.info('Authenticated successfully');
+		logger.info('Authenticated successfully - session saved');
 	});
 
 	client.on('auth_failure', (msg) => {

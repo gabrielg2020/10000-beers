@@ -37,29 +37,25 @@ services:
     depends_on:
       - postgres
 
-  # bot:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile
-  #   container_name: beers-bot
-  #   restart: unless-stopped
-  #   env_file:
-  #     - .env
-  #   environment:
-  #     DATABASE_URL: postgresql://beers:${POSTGRES_PASSWORD:-beers_dev_password}@postgres:5432/beers
-  #     NODE_ENV: ${NODE_ENV:-development}
-  #   volumes:
-  #     - ./src:/app/src:ro
-  #     - images:/data/images
-  #     - wwebjs-auth:/app/.wwebjs_auth
-  #     - wwebjs-cache:/app/.wwebjs_cache
-  #   networks:
-  #     - beers-network
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #   # Uncomment for development with hot reload
-  #   # command: npm run dev
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: beers-bot
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://beers:${POSTGRES_PASSWORD:-beers_dev_password}@postgres:5432/beers
+      NODE_ENV: ${NODE_ENV:-production}
+    volumes:
+      - ./.wwebjs_auth:/app/.wwebjs_auth
+      - images:/data/images
+    networks:
+      - beers-network
+    depends_on:
+      postgres:
+        condition: service_healthy
 
 volumes:
   pgdata:
@@ -67,10 +63,6 @@ volumes:
   pgadmin-data:
     driver: local
   images:
-    driver: local
-  wwebjs-auth:
-    driver: local
-  wwebjs-cache:
     driver: local
 
 networks:

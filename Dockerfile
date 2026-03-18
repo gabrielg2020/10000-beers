@@ -44,6 +44,9 @@ RUN npm ci --omit=dev && npm cache clean --force
 # Copy built application from build stage
 COPY --from=build /app/dist ./dist
 
+# Copy Prisma schema for runtime
+COPY --from=build /app/src/database/schema.prisma ./src/database/schema.prisma
+
 # Create directories for data persistence
 RUN mkdir -p /data/images /app/.wwebjs_auth /app/.wwebjs_cache && \
     chown -R node:node /data /app

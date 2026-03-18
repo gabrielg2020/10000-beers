@@ -1,9 +1,31 @@
 ## Current work
-Ready for next feature
+Add user commands to show statistics
+- !leaderboard, shows all users beers statics in order
 
 ## Project
 A bot which will be deployed in a group chat with my friends called '10,000 beers'. The aim is to send a photo of a beer when you drink one. This bot should keep track of how many beers have been drunk and who drunk them.
 This project uses TypeScript with Postgres database. Core beer submission functionality is implemented.
+
+## WhatsApp Authentication
+The bot uses LocalAuth with clientId '10000-beers' for session persistence.
+- Session stored in `.wwebjs_auth/session-10000-beers/`
+- Session persists across restarts (both dev and production)
+- Docker uses bind mount to share session between host and container
+
+**First-time setup:**
+1. Run locally: `npm run dev`
+2. Scan QR code to authenticate
+3. Session is saved and will persist
+
+**Production deployment:**
+- Same session files used (via bind mount in docker-compose.yml)
+- No need to re-authenticate when deploying
+- Session survives container restarts
+
+**Hot reload behaviour:**
+- Hot reload (tsx watch) now works with session persistence
+- 2-second delay after client.destroy() ensures session data is flushed
+- Graceful Chrome shutdown (SIGTERM before SIGKILL) prevents corruption
 
 ## Structure
 src/

@@ -35,7 +35,7 @@ docs/
 coverage/
 .nyc_output/
 
-# WhatsApp session data (will be in volumes)
+# WhatsApp session data (shared via bind mount)
 .wwebjs_auth/
 .wwebjs_cache/
 
