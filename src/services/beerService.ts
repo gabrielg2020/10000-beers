@@ -1,3 +1,4 @@
+import { config } from "../config";
 import { prisma } from "../database";
 import { BeerSubmissionError, BeerSubmissionRequest, BeerSubmissionResult, DuplicateCheckResult } from "../types/submission";
 import { logger } from "../utils/logger";
@@ -9,7 +10,7 @@ export class BeerService {
   private readonly replyOnSubmission: boolean;
 
   constructor() {
-    this.replyOnSubmission = process.env.REPLY_ON_SUBMISSION?.toLowerCase() !== 'false';
+    this.replyOnSubmission = config.bot.replyOnSubmission
   }
 
   async checkDuplicate(

@@ -171,26 +171,69 @@ docker-compose.yml:
 - JSON output in production
 - Log to stdout (Docker captures)
 
-### Configuration: .env files
-**Decision:** Use dotenv for environment configuration.
+### Configuration: Centralised Config Module
+**Decision:** Use centralised configuration module that loads and validates environment variables at startup.
 
-**Rationale:**
-- Standard Node.js pattern
-- Works with docker-compose environment variables
-- Easy to maintain different configs (dev, prod)
+**Status: Implemented** - Configuration module with comprehensive validation.
+
+**Implementation:**
+- Single config module (`src/config/`) loads all environment variables once at startup
+- Type-safe access via `config` singleton exported from module
+- Comprehensive validation with clear error messages on startup failure
+- Grouped into logical sections: application, database, whatsapp, storage, bot
+
+**Files:**
+- `src/config/types.ts` - TypeScript interfaces for all config sections
+- `src/config/index.ts` - Config loader with validation and exports
+
+**Validation:**
+- Required variables: `DATABASE_URL`, `WHATSAPP_GROUP_ID`
+- Database URL: must start with `postgresql://` or `postgres://`
+- WhatsApp group ID: must match format `[0-9]+@g.us`
+- Admin IDs: must end with `@c.us` (comma-separated list)
+- Node environment: must be `development`, `production`, or `test`
+- Log level: must be `debug`, `info`, `warn`, or `error`
+- Numeric values: must be non-negative integers
 
 **Required variables:**
 ```
 DATABASE_URL=postgresql://user:pass@postgres:5432/beers
-WHATSAPP_GROUP_ID=...
+WHATSAPP_GROUP_ID=1234567890@g.us
+```
+
+**Optional variables with defaults:**
+```
 IMAGE_STORAGE_PATH=/data/images
-NODE_ENV=production
-LOG_LEVEL=info
+NODE_ENV=development
+LOG_LEVEL=debug (dev) | info (prod)
 SUBMISSION_COOLDOWN_MINUTES=0
 REPLY_ON_SUBMISSION=true
-ADMIN_IDS=447123456789@c.us,447987654321@c.us
+ADMIN_IDS=
 MAX_IMAGE_SIZE_MB=10
 ```
+
+**Usage:**
+```typescript
+import { config } from '../config';
+
+// Type-safe access
+const logLevel = config.application.logLevel;
+const groupId = config.whatsapp.groupId;
+const imagePath = config.storage.imagePath;
+```
+
+**Benefits:**
+- Type safety with IDE autocomplete
+- Fail-fast on startup with clear validation errors
+- Single source of truth for configuration
+- Easier testing (mock entire config object)
+- Self-documenting via TypeScript types
+
+**Rationale:**
+- Scattered `process.env` access throughout codebase was error-prone
+- No validation meant runtime errors from invalid config
+- Difficult to test services that read environment variables directly
+- Centralised approach provides better developer experience and catches errors early
 
 ## Configuration Decisions
 

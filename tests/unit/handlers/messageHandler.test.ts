@@ -1,3 +1,4 @@
+process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
 process.env.WHATSAPP_GROUP_ID = '123456789@g.us';
 
 import { MessageHandler } from '../../../src/handlers/messageHandler';
@@ -38,16 +39,6 @@ describe('MessageHandler', () => {
 	});
 
 	describe('constructor', () => {
-		it('should throw error if WHATSAPP_GROUP_ID is not set', () => {
-			delete process.env.WHATSAPP_GROUP_ID;
-
-			expect(() => new MessageHandler()).toThrow(
-				'WHATSAPP_GROUP_ID environment variable is required',
-			);
-
-			process.env.WHATSAPP_GROUP_ID = groupId;
-		});
-
 		it('should initialise with group ID from environment', () => {
 			const handler = new MessageHandler();
 

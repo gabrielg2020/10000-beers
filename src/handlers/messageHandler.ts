@@ -2,18 +2,13 @@ import { Message } from "whatsapp-web.js";
 import { logger } from "../utils/logger";
 import { BeerImageData, BeerSubmissionError, BeerSubmissionRequest } from "../types/submission";
 import { beerService } from "../services/beerService";
+import { config } from "../config";
 
 export class MessageHandler {
   private readonly groupId: string;
 
   constructor() {
-    const groupId = process.env.WHATSAPP_GROUP_ID;
-
-    if (!groupId) {
-      throw new Error('WHATSAPP_GROUP_ID environment variable is required');
-    }
-
-    this.groupId = groupId;
+    this.groupId = config.whatsapp.groupId;
     logger.info({ groupId: this.groupId }, 'Message handler initialised for group');
   }
 

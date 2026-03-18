@@ -1,9 +1,8 @@
 import pino from 'pino';
-
-const isDevelopment = process.env.NODE_ENV !== 'production';
+import { config } from '../config';
 
 export const logger = pino({
-	level: process.env.LOG_LEVEL || (isDevelopment ? 'debug' : 'info'),
+	level: config.application.logLevel,
 	formatters: {
 		level: (label) => {
 			return { level: label };
@@ -13,7 +12,7 @@ export const logger = pino({
 		error: pino.stdSerializers.err,
 	},
 	timestamp: pino.stdTimeFunctions.isoTime,
-	...(isDevelopment && {
+	...(config.application.isDevelopment && {
 		transport: {
 			target: 'pino-pretty',
 			options: {

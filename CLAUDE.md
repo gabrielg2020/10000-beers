@@ -1,5 +1,5 @@
 ## Current work
-Next: Implement centralised configuration module
+Ready for next feature
 
 ## Project
 A bot which will be deployed in a group chat with my friends called '10,000 beers'. The aim is to send a photo of a beer when you drink one. This bot should keep track of how many beers have been drunk and who drunk them.
@@ -8,6 +8,9 @@ This project uses TypeScript with Postgres database. Core beer submission functi
 ## Structure
 src/
   index.ts               - App entry point with graceful shutdown
+  config/
+    index.ts             - Centralised configuration loader with validation
+    types.ts             - Configuration type definitions
   handlers/
     messageHandler.ts    - WhatsApp message routing and beer submission
   services/
@@ -53,6 +56,14 @@ Always use existing services and utilities rather than duplicating logic:
 - `imageService.calculateHash()` - SHA256 hash for duplicate detection
 - `messageHandler.handleMessage()` - Process WhatsApp messages for beer submissions
 
+**Configuration:**
+- `config` - Centralised configuration singleton (loads from environment variables)
+  - `config.application.*` - Node environment, log level, environment flags
+  - `config.database.*` - Database connection URL
+  - `config.whatsapp.*` - Group ID, admin IDs
+  - `config.storage.*` - Image path, max size
+  - `config.bot.*` - Cooldown minutes, reply behaviour
+
 **Utilities:**
 - `validateMimetype()` - Check image format (JPEG, PNG, WebP, GIF)
 - `validateFileSize()` - Check image size limits
@@ -73,9 +84,10 @@ Always use existing services and utilities rather than duplicating logic:
 ## Testing
 - Arrange-Act-Assert pattern (no comments, just blank lines between sections)
 - Unit tests (tests/unit/) - business logic with mocked dependencies
-- 63 tests passing (services, handlers, utils)
+- 62 tests passing (services, handlers, utils)
 - Jest with ts-jest for TypeScript support
 - All dependencies mocked (Prisma, WhatsApp client, file system)
+- Required env vars set in tests/setup.ts for config module
 
 ## Security
 

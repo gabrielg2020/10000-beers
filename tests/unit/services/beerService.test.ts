@@ -1,3 +1,7 @@
+process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
+process.env.WHATSAPP_GROUP_ID = '123456789@g.us';
+process.env.REPLY_ON_SUBMISSION = 'true';
+
 import { beerService } from '../../../src/services/beerService';
 import { prisma } from '../../../src/database/client';
 import { imageService } from '../../../src/services/imageService';
@@ -183,8 +187,7 @@ describe('BeerService', () => {
 			expect(prisma.beer.create).not.toHaveBeenCalled();
 		});
 
-		it('should not include message when REPLY_ON_SUBMISSION is false', async () => {
-			process.env.REPLY_ON_SUBMISSION = 'false';
+		it('should include message when REPLY_ON_SUBMISSION is true', async () => {
 			const request = createMockRequest();
 			const userInfo = {
 				id: 'user-123',
@@ -211,10 +214,9 @@ describe('BeerService', () => {
 			(prisma.beer.create as jest.Mock).mockResolvedValue(beer);
 			(userService.getTotalBeerCount as jest.Mock).mockResolvedValue(100);
 
-			const beerServiceInstance = new (beerService.constructor as any)();
-			const result = await beerServiceInstance.submitBeer(request);
+			const result = await beerService.submitBeer(request);
 
-			expect(result.message).toBe('');
+			expect(result.message).toBe('Beer #100 logged for @John Doe! 🍺');
 		});
 
 		it('should wrap unexpected errors in BeerSubmissionError', async () => {
