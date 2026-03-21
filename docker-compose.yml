@@ -41,6 +41,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      target: production
     container_name: beers-bot
     restart: unless-stopped
     env_file:
@@ -48,8 +49,10 @@ services:
     environment:
       DATABASE_URL: postgresql://beers:${POSTGRES_PASSWORD:-beers_dev_password}@postgres:5432/beers
       NODE_ENV: ${NODE_ENV:-production}
+      IMAGE_STORAGE_PATH: /data/images
     volumes:
       - ./.wwebjs_auth:/app/.wwebjs_auth
+      - ./.wwebjs_cache:/app/.wwebjs_cache
       - images:/data/images
     networks:
       - beers-network
@@ -63,6 +66,10 @@ volumes:
   pgadmin-data:
     driver: local
   images:
+    driver: local
+  wwebjs-auth:
+    driver: local
+  wwebjs-cache:
     driver: local
 
 networks:

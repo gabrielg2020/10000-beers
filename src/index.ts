@@ -5,9 +5,8 @@ import { logger } from './utils/logger';
 import { imageService } from './services/imageService';
 import { prisma } from './database';
 import { messageHandler } from './handlers/messageHandler';
-import fs from 'node:fs';
-import path from 'node:path';
 import { aiService } from './services/aiService';
+import { config } from './config';
 import './commands' // KEEP LAST
 
 let client: Client | null = null;
@@ -92,6 +91,25 @@ async function gracefulShutdown(signal: string) {
 }
 
 async function initialise() {
+	// Clean up any stale Chrome lock files
+	try {
+		const fs = await import('node:fs/promises');
+		const lockFiles = ['SingletonLock', 'SingletonSocket', 'SingletonCookie'];
+		for (const lockFile of lockFiles) {
+			const lockPath = `${SESSION_PATH}/${lockFile}`;
+			try {
+				await fs.unlink(lockPath);
+				logger.debug({ lockPath }, 'Removed stale lock file');
+			} catch (err: unknown) {
+				if ((err as NodeJS.ErrnoException).code !== 'ENOENT') {
+					logger.warn({ err, lockPath }, 'Failed to remove lock file');
+				}
+			}
+		}
+	} catch (error) {
+		logger.warn({ error }, 'Error cleaning up lock files');
+	}
+
 	// Wait for any previous Chrome instance to fully close
 	logger.debug('Checking for existing Chrome processes...');
 	await waitForChromeToClose();
@@ -120,12 +138,27 @@ async function initialise() {
     process.exit(1);
   }
 
+	const puppeteerConfig: any = {
+		headless: true,
+		args: [
+			'--no-sandbox',
+			'--disable-setuid-sandbox',
+			'--disable-dev-shm-usage',
+			'--disable-accelerated-2d-canvas',
+			'--no-first-run',
+			'--no-zygote',
+			'--disable-gpu',
+		],
+	};
+
+	// Only set executablePath if explicitly provided (for Docker)
+	if (config.application.puppeteerExecutablePath) {
+		puppeteerConfig.executablePath = config.application.puppeteerExecutablePath;
+	}
+
 	client = new Client({
 		authStrategy: new LocalAuth({ clientId: '10000-beers' }),
-		puppeteer: {
-			headless: true,
-			args: ['--no-sandbox', '--disable-setuid-sandbox'],
-		},
+		puppeteer: puppeteerConfig,
 	});
 
 	client.on('loading_screen', (percent, message) => {
@@ -150,7 +183,7 @@ async function initialise() {
 		logger.error({ msg }, 'Authentication failure');
 	});
 
-	client.on('message', async (message) => {
+	client.on('message_create', async (message) => {
 		try {
 			await messageHandler.handleMessage(message);
 		} catch (error) {

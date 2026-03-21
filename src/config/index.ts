@@ -23,9 +23,9 @@ function getOptionalEnv(key: string, defaultValue: string): string {
 
 function validateWhatsAppId(id: string, type: 'group' | 'user'): boolean {
 	if (type === 'group') {
-		return /^[0-9]+@g\.us$/.test(id);
+		return /^[0-9]+@(g\.us|lid)$/.test(id);
 	}
-	return id.endsWith('@c.us');
+	return id.endsWith('@c.us') || id.endsWith('@lid');
 }
 
 function validateDatabaseUrl(url: string): void {
@@ -69,7 +69,7 @@ function parseAdminIds(adminIdsString: string): string[] {
 
 	if (invalidIds.length > 0) {
 		throw new ConfigValidationError(
-			`Invalid admin IDs (must end with @c.us): ${invalidIds.join(', ')}`,
+			`Invalid admin IDs (must end with @c.us or @lid): ${invalidIds.join(', ')}`,
 			invalidIds,
 		);
 	}
@@ -103,7 +103,7 @@ function validateConfig(): void {
 	const groupId = process.env.WHATSAPP_GROUP_ID;
 	if (groupId && !validateWhatsAppId(groupId, 'group')) {
 		throw new ConfigValidationError(
-			`WHATSAPP_GROUP_ID must match format: 1234567890@g.us, got: ${groupId}`,
+			`WHATSAPP_GROUP_ID must match format: 1234567890@g.us or 1234567890@lid, got: ${groupId}`,
 			['WHATSAPP_GROUP_ID'],
 		);
 	}
@@ -136,12 +136,15 @@ function loadApplicationConfig(): ApplicationConfig {
 	const isProduction = nodeEnv === 'production';
 	const isTest = nodeEnv === 'test';
 
+	const puppeteerExecutablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+
 	return {
 		nodeEnv: nodeEnv as ApplicationConfig['nodeEnv'],
 		logLevel: logLevel as ApplicationConfig['logLevel'],
 		isDevelopment,
 		isProduction,
 		isTest,
+		puppeteerExecutablePath,
 	};
 }
 

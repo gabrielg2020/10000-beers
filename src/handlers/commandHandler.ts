@@ -77,7 +77,12 @@ export class CommandHandler {
 			const result = await command.execute(context);
 
 			if (result.reply) {
+				logger.debug(
+					{ commandName, replyLength: result.reply.length, to: message.from, isGroup: message.from.includes('@g.us') },
+					'Sending reply',
+				);
 				await message.reply(result.reply);
+				logger.info({ commandName }, 'Reply sent successfully');
 			}
 		} catch (error) {
 			if (error instanceof CommandError) {

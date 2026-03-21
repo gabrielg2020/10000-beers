@@ -18,6 +18,17 @@ export class MessageHandler {
   }
 
   async handleMessage(message: Message): Promise<void> {
+    logger.debug(
+      { from: message.from, fromMe: message.fromMe, chatType: message.from.includes('@g.us') ? 'group' : 'private' },
+      'Received message',
+    );
+
+    // Step 0: Ignore own messages in production (allow in dev for testing)
+    if (message.fromMe && !config.application.isDevelopment) {
+      logger.debug('Ignoring own message (production mode)');
+      return;
+    }
+
     // Step 1: Make sure we only process messages from groupchat
     if (!this.isFromConfiguredGroup(message)) {
       logger.debug(
@@ -85,12 +96,19 @@ export class MessageHandler {
       const result = await beerService.submitBeer(submissionRequest);
 
       if (result.message) {
+        logger.debug(
+          { whatsappId, messageLength: result.message.length },
+          'Sending beer submission reply',
+        );
         await message.reply(result.message);
+        logger.info({ whatsappId }, 'Beer submission reply sent successfully');
       }
     } catch (error) {
       if (error instanceof BeerSubmissionError) {
         if (error.userMessage) {
+          logger.debug('Sending error reply');
           await message.reply(error.userMessage);
+          logger.info('Error reply sent successfully');
         }
         logger.warn(
           { code: error.code, message: error.message },
@@ -98,9 +116,11 @@ export class MessageHandler {
         );
       } else {
         logger.error({ error }, 'Unexpected error handling message');
+        logger.debug('Sending generic error reply');
         await message.reply(
           'Something went wrong processing your beer. Please try again',
         );
+        logger.info('Generic error reply sent successfully');
       }
     }
   }

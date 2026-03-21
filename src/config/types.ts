@@ -39,6 +39,7 @@ export interface ApplicationConfig {
   isDevelopment: boolean;
   isProduction: boolean;
   isTest: boolean;
+  puppeteerExecutablePath?: string;
 }
 
 export class ConfigValidationError extends Error {
