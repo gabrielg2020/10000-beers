@@ -72,6 +72,9 @@ COPY --from=build /app/dist ./dist
 # Copy AI system instruction file
 COPY --from=build /app/src/system_instruction.md ./src/system_instruction.md
 
+# Copy health check script
+COPY healthcheck.js ./healthcheck.js
+
 # Create directories for data persistence
 RUN mkdir -p /data/images /app/.wwebjs_auth /app/.wwebjs_cache && \
     chown -R node:node /data /app

@@ -10,6 +10,7 @@ import { config } from './config';
 import './commands' // KEEP LAST
 
 let client: Client | null = null;
+let isShuttingDown = false;
 const SESSION_PATH = '.wwebjs_auth/session-10000-beers';
 
 async function waitForChromeToClose(maxWaitMs = 8000) {
@@ -68,6 +69,13 @@ async function waitForChromeToClose(maxWaitMs = 8000) {
 }
 
 async function gracefulShutdown(signal: string) {
+	// Prevent multiple shutdown attempts
+	if (isShuttingDown) {
+		logger.debug({ signal }, 'Shutdown already in progress, ignoring signal');
+		return;
+	}
+	isShuttingDown = true;
+
 	logger.info({ signal }, 'Shutdown signal received');
 
 	try {

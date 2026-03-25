@@ -59,6 +59,12 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'node', '/app/healthcheck.js']
+      interval: 45s
+      timeout: 15s
+      retries: 3
+      start_period: 90s
 
 volumes:
   pgdata:
