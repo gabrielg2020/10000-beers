@@ -139,6 +139,8 @@ For comprehensive guides and documentation, visit the **[Wiki](https://github.co
 | `AI_CONFIDENCE_THRESHOLD` | `0.9` | Minimum confidence for AI classification (0.0-1.0) |
 | `GEMINI_API_KEY` | _(required if AI enabled)_ | Google Gemini API key |
 | `GEMINI_MODEL` | `gemini-1.5-flash` | Gemini model to use |
+| `GITHUB_REPO_OWNER` | `gabrielg2020` | GitHub repository owner for `!release` command |
+| `GITHUB_REPO_NAME` | `10000-beers` | GitHub repository name for `!release` command |
 | `STARTUP_WAIT` | `0` | Seconds to wait before initialisation |
 | `PUPPETEER_EXECUTABLE_PATH` | _(auto-detected)_ | Path to Chromium executable |
 
@@ -163,7 +165,8 @@ For comprehensive guides and documentation, visit the **[Wiki](https://github.co
 |---------|-------------|--------|
 | `!undo` | Remove your last beer submission (10-minute window) | All users |
 | `!leaderboard` | Display beer leaderboard | Admin only |
-| `!removeLast @user` | Removes that users last beer submission | Admin only |
+| `!removeLast @user` | Remove that user's last beer submission | Admin only |
+| `!release [version]` | Fetch and display latest GitHub release | Admin only |
 
 ## Development
 

@@ -4,6 +4,7 @@ import type {
 	ApplicationConfig,
 	BotConfig,
 	DatabaseConfig,
+	GitHubConfig,
 	StorageConfig,
 	WhatsAppConfig,
 } from './types';
@@ -226,6 +227,13 @@ function loadAiConfig(): AiConfig {
 	};
 }
 
+function loadGitHubConfig(): GitHubConfig {
+	return {
+		repoOwner: getOptionalEnv('GITHUB_REPO_OWNER', 'gabrielg2020'),
+		repoName: getOptionalEnv('GITHUB_REPO_NAME', '10000-beers'),
+	};
+}
+
 function loadConfig(): AppConfig {
 	validateConfig();
 
@@ -235,19 +243,21 @@ function loadConfig(): AppConfig {
 		whatsapp: loadWhatsAppConfig(),
 		storage: loadStorageConfig(),
 		bot: loadBotConfig(),
-    ai: loadAiConfig(),
+		ai: loadAiConfig(),
+		github: loadGitHubConfig(),
 	};
 }
 
 export const config = loadConfig();
 
 export type {
+	AiConfig,
 	AppConfig,
 	ApplicationConfig,
 	BotConfig,
 	DatabaseConfig,
+	GitHubConfig,
 	StorageConfig,
 	WhatsAppConfig,
-  AiConfig,
 } from './types';
 export { ConfigValidationError } from './types';

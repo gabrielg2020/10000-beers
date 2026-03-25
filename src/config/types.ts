@@ -5,6 +5,7 @@ export interface AppConfig {
   bot: BotConfig;
   application: ApplicationConfig;
   ai: AiConfig;
+  github: GitHubConfig;
 }
 
 export interface DatabaseConfig {
@@ -31,6 +32,11 @@ export interface AiConfig {
   confidenceThreshold: number;
   geminiApiKey: string;
   geminiModel: string;
+}
+
+export interface GitHubConfig {
+  repoOwner: string;
+  repoName: string;
 }
 
 export interface ApplicationConfig {

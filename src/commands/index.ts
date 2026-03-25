@@ -1,9 +1,11 @@
 import { commandRegistry } from "./commandRegistry";
 import { LeaderbaordCommand } from "./leaderboardCommand";
+import { ReleaseCommand } from "./releaseCommand";
 import { RemoveLastCommand } from "./removeLastCommand";
 import { UndoCommand } from "./undoCommand";
 
 commandRegistry.register(new LeaderbaordCommand());
+commandRegistry.register(new ReleaseCommand());
 commandRegistry.register(new RemoveLastCommand());
 commandRegistry.register(new UndoCommand());
 
