@@ -123,7 +123,7 @@ export class BeerService {
       );
 
       // Step 8: Build sucess message
-      const message = `Beer #${totalCount} logged for @${displayName}! 🍺`;
+      const message = `Beer #${totalCount} logged by @${displayName}! 🍺`;
 
       return {
         success: true,

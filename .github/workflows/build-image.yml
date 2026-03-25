@@ -8,6 +8,12 @@ on:
         required: true
         default: 'latest'
         type: string
+  workflow_call:
+    inputs:
+      tag:
+        description: 'Image tag (e.g., v1.0.0, latest)'
+        required: true
+        type: string
 
 env:
   REGISTRY: ghcr.io

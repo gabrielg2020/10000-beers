@@ -38,11 +38,9 @@ services:
       - postgres
 
   bot:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: production
+    image: ghcr.io/gabrielg2020/10000-beers:latest
     container_name: beers-bot
+    pull_policy: always
     restart: unless-stopped
     env_file:
       - .env
