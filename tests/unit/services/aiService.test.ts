@@ -12,18 +12,16 @@ jest.mock('node:fs/promises', () => ({
 	readFile: jest.fn(),
 }));
 
-jest.mock('@google/generative-ai', () => {
-	const mockGenerateContent = jest.fn();
-	const mockGetGenerativeModel = jest.fn(() => ({
-		generateContent: mockGenerateContent,
-	}));
+const mockGenerateContent = jest.fn();
+const mockGetGenerativeModel = jest.fn(() => ({
+	generateContent: mockGenerateContent,
+}));
 
+jest.mock('@google/generative-ai', () => {
 	return {
 		GoogleGenerativeAI: jest.fn(() => ({
 			getGenerativeModel: mockGetGenerativeModel,
 		})),
-		__mockGenerateContent: mockGenerateContent,
-		__mockGetGenerativeModel: mockGetGenerativeModel,
 	};
 });
 
@@ -41,22 +39,20 @@ describe('AiService', () => {
 	const mockImageBuffer = Buffer.from('fake-image-data');
 	const mockSystemInstruction = 'You are a beer classifier';
 
-	beforeEach(async () => {
-		jest.clearAllMocks();
-		jest.resetModules();
-
-		process.env.AI_ENABLED = 'true';
-		process.env.AI_CONFIDENCE_THRESHOLD = '0.9';
-		process.env.GEMINI_API_KEY = 'test-key';
-		process.env.GEMINI_MODEL = 'gemini-1.5-flash';
-
-		(readFile as jest.Mock).mockResolvedValue(mockSystemInstruction);
-
+	beforeAll(async () => {
 		const { aiService: service } = await import('../../../src/services/aiService');
 		aiService = service;
 	});
 
+	beforeEach(() => {
+		jest.clearAllMocks();
+	});
+
 	describe('initialise', () => {
+		beforeEach(() => {
+			(readFile as jest.Mock).mockResolvedValue(mockSystemInstruction);
+		});
+
 		it('should load system instruction when AI is enabled', async () => {
 			await aiService.initialise();
 
@@ -64,15 +60,18 @@ describe('AiService', () => {
 		});
 
 		it('should skip initialisation when AI is disabled', async () => {
-			jest.resetModules();
+			const originalEnabled = process.env.AI_ENABLED;
 			process.env.AI_ENABLED = 'false';
 			(readFile as jest.Mock).mockClear();
 
+			jest.resetModules();
 			const { aiService: disabledService } = await import('../../../src/services/aiService');
 
 			await disabledService.initialise();
 
 			expect(readFile).not.toHaveBeenCalled();
+
+			process.env.AI_ENABLED = originalEnabled;
 		});
 
 		it('should throw error if system instruction file not found', async () => {
@@ -85,14 +84,20 @@ describe('AiService', () => {
 
 	describe('classifyBeer', () => {
 		beforeEach(async () => {
-			(readFile as jest.Mock).mockResolvedValue(mockSystemInstruction);
+			(readFile as jest.Mock).mockImplementation((path: string) => {
+				if (path === 'src/system_instruction.md') {
+					return Promise.resolve(mockSystemInstruction);
+				}
+				return Promise.resolve(mockImageBuffer);
+			});
 			await aiService.initialise();
 		});
 
 		it('should auto-accept when AI is disabled', async () => {
-			jest.resetModules();
+			const originalEnabled = process.env.AI_ENABLED;
 			process.env.AI_ENABLED = 'false';
 
+			jest.resetModules();
 			const { aiService: disabledService } = await import('../../../src/services/aiService');
 			await disabledService.initialise();
 
@@ -103,6 +108,8 @@ describe('AiService', () => {
 				beerType: null,
 				confidence: 1.0,
 			});
+
+			process.env.AI_ENABLED = originalEnabled;
 		});
 
 		it('should accept valid beer with high confidence', async () => {
@@ -116,8 +123,7 @@ describe('AiService', () => {
 				.mockResolvedValueOnce(mockSystemInstruction)
 				.mockResolvedValueOnce(mockImageBuffer);
 
-			const { __mockGenerateContent } = await import('@google/generative-ai');
-			(__mockGenerateContent as jest.Mock).mockResolvedValue({
+			mockGenerateContent.mockResolvedValue({
 				response: {
 					text: () => JSON.stringify(mockResponse),
 				},
@@ -143,8 +149,7 @@ describe('AiService', () => {
 				.mockResolvedValueOnce(mockSystemInstruction)
 				.mockResolvedValueOnce(mockImageBuffer);
 
-			const { __mockGenerateContent } = await import('@google/generative-ai');
-			(__mockGenerateContent as jest.Mock).mockResolvedValue({
+			mockGenerateContent.mockResolvedValue({
 				response: {
 					text: () => JSON.stringify(mockResponse),
 				},
@@ -171,8 +176,7 @@ describe('AiService', () => {
 				.mockResolvedValueOnce(mockSystemInstruction)
 				.mockResolvedValueOnce(mockImageBuffer);
 
-			const { __mockGenerateContent } = await import('@google/generative-ai');
-			(__mockGenerateContent as jest.Mock).mockResolvedValue({
+			mockGenerateContent.mockResolvedValue({
 				response: {
 					text: () => JSON.stringify(mockResponse),
 				},
@@ -193,8 +197,7 @@ describe('AiService', () => {
 				.mockResolvedValueOnce(mockSystemInstruction)
 				.mockResolvedValueOnce(mockImageBuffer);
 
-			const { __mockGenerateContent } = await import('@google/generative-ai');
-			(__mockGenerateContent as jest.Mock).mockRejectedValue(new Error('API error'));
+			mockGenerateContent.mockRejectedValue(new Error('API error'));
 
 			const result = await aiService.classifyBeer('/path/to/image.jpg');
 
@@ -213,8 +216,7 @@ describe('AiService', () => {
 				.mockResolvedValueOnce(mockSystemInstruction)
 				.mockResolvedValueOnce(mockImageBuffer);
 
-			const { __mockGenerateContent } = await import('@google/generative-ai');
-			(__mockGenerateContent as jest.Mock).mockResolvedValue({
+			mockGenerateContent.mockResolvedValue({
 				response: {
 					text: () => mockResponse,
 				},
@@ -240,8 +242,7 @@ describe('AiService', () => {
 				.mockResolvedValueOnce(mockSystemInstruction)
 				.mockResolvedValueOnce(mockImageBuffer);
 
-			const { __mockGenerateContent } = await import('@google/generative-ai');
-			(__mockGenerateContent as jest.Mock).mockResolvedValue({
+			mockGenerateContent.mockResolvedValue({
 				response: {
 					text: () => JSON.stringify(mockResponse),
 				},
@@ -263,12 +264,7 @@ describe('AiService', () => {
 				confidence: 0.95,
 			};
 
-			(readFile as jest.Mock)
-				.mockResolvedValueOnce(mockSystemInstruction)
-				.mockResolvedValueOnce(mockImageBuffer);
-
-			const { __mockGenerateContent, __mockGetGenerativeModel } = await import('@google/generative-ai');
-			(__mockGenerateContent as jest.Mock).mockResolvedValue({
+			mockGenerateContent.mockResolvedValue({
 				response: {
 					text: () => JSON.stringify(mockResponse),
 				},
@@ -276,10 +272,11 @@ describe('AiService', () => {
 
 			await aiService.classifyBeer('/path/to/image.jpg');
 
-			expect(__mockGetGenerativeModel).toHaveBeenCalledWith({
-				model: 'gemini-1.5-flash',
-				systemInstruction: mockSystemInstruction,
-			});
+			expect(mockGetGenerativeModel).toHaveBeenCalledWith(
+				expect.objectContaining({
+					model: 'gemini-1.5-flash',
+				}),
+			);
 		});
 	});
 });

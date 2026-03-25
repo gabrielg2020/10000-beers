@@ -7,6 +7,7 @@ export class LeaderbaordCommand implements Command {
 	readonly name = 'leaderboard';
 	readonly aliases = ['lb', 'top'];
 	readonly description = 'Show beer leaderboard for all users';
+	readonly adminOnly = true;
 
 	async execute(context: CommandContext): Promise<CommandResult> {
 		try {

@@ -14,25 +14,25 @@ describe('imageValidation', () => {
 			expect(result.error).toBeUndefined();
 		});
 
-		it('should accept valid PNG mimetype', () => {
+		it('should reject PNG mimetype', () => {
 			const result = validateMimetype('image/png');
 
-			expect(result.isValid).toBe(true);
-			expect(result.error).toBeUndefined();
+			expect(result.isValid).toBe(false);
+			expect(result.error).toContain('Only JPEG images are allowed');
 		});
 
-		it('should accept valid WebP mimetype', () => {
+		it('should reject WebP mimetype', () => {
 			const result = validateMimetype('image/webp');
 
-			expect(result.isValid).toBe(true);
-			expect(result.error).toBeUndefined();
+			expect(result.isValid).toBe(false);
+			expect(result.error).toContain('Only JPEG images are allowed');
 		});
 
-		it('should accept valid GIF mimetype', () => {
+		it('should reject GIF mimetype', () => {
 			const result = validateMimetype('image/gif');
 
-			expect(result.isValid).toBe(true);
-			expect(result.error).toBeUndefined();
+			expect(result.isValid).toBe(false);
+			expect(result.error).toContain('Only JPEG images are allowed');
 		});
 
 		it('should reject invalid mimetype', () => {
@@ -103,35 +103,35 @@ describe('imageValidation', () => {
 			expect(result.error).toBeUndefined();
 		});
 
-		it('should accept valid PNG buffer', () => {
+		it('should reject PNG buffer', () => {
 			const pngBuffer = Buffer.from([
 				0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
 			]);
 
 			const result = validateImageBuffer(pngBuffer);
 
-			expect(result.isValid).toBe(true);
-			expect(result.error).toBeUndefined();
+			expect(result.isValid).toBe(false);
+			expect(result.error).toContain('not a valid JPEG');
 		});
 
-		it('should accept valid WebP buffer', () => {
+		it('should reject WebP buffer', () => {
 			const webpBuffer = Buffer.from([
 				0x52, 0x49, 0x46, 0x46, 0x00, 0x00, 0x00, 0x00,
 			]);
 
 			const result = validateImageBuffer(webpBuffer);
 
-			expect(result.isValid).toBe(true);
-			expect(result.error).toBeUndefined();
+			expect(result.isValid).toBe(false);
+			expect(result.error).toContain('not a valid JPEG');
 		});
 
-		it('should accept valid GIF buffer', () => {
+		it('should reject GIF buffer', () => {
 			const gifBuffer = Buffer.from([0x47, 0x49, 0x46, 0x38, 0x39, 0x61]);
 
 			const result = validateImageBuffer(gifBuffer);
 
-			expect(result.isValid).toBe(true);
-			expect(result.error).toBeUndefined();
+			expect(result.isValid).toBe(false);
+			expect(result.error).toContain('not a valid JPEG');
 		});
 
 		it('should reject invalid buffer', () => {
@@ -140,7 +140,7 @@ describe('imageValidation', () => {
 			const result = validateImageBuffer(invalidBuffer);
 
 			expect(result.isValid).toBe(false);
-			expect(result.error).toContain('corrupt or invalid');
+			expect(result.error).toContain('not a valid JPEG');
 		});
 
 		it('should reject empty buffer', () => {
@@ -169,22 +169,22 @@ describe('imageValidation', () => {
 			expect(extension).toBe('jpg');
 		});
 
-		it('should return png for image/png', () => {
+		it('should return jpg fallback for image/png', () => {
 			const extension = getExtensionFromMimetype('image/png');
 
-			expect(extension).toBe('png');
+			expect(extension).toBe('jpg');
 		});
 
-		it('should return webp for image/webp', () => {
+		it('should return jpg fallback for image/webp', () => {
 			const extension = getExtensionFromMimetype('image/webp');
 
-			expect(extension).toBe('webp');
+			expect(extension).toBe('jpg');
 		});
 
-		it('should return gif for image/gif', () => {
+		it('should return jpg fallback for image/gif', () => {
 			const extension = getExtensionFromMimetype('image/gif');
 
-			expect(extension).toBe('gif');
+			expect(extension).toBe('jpg');
 		});
 
 		it('should return jpg for unknown mimetype', () => {
