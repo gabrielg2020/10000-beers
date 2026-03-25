@@ -15,13 +15,13 @@ A WhatsApp bot that tracks beer consumption for a group of friends. Send a photo
 
 ## Documentation
 
-For comprehensive guides and documentation, visit the **[Wiki](https://github.com/YOUR_USERNAME/10000-beers/wiki)**:
+For comprehensive guides and documentation, visit the **[Wiki](https://github.com/gabrielg2020/10000-beers/wiki)**:
 
-- **[Getting Started](https://github.com/YOUR_USERNAME/10000-beers/wiki/Getting-Started)** - Detailed setup instructions
-- **[Configuration](https://github.com/YOUR_USERNAME/10000-beers/wiki/Configuration)** - Complete environment variable reference
-- **[Architecture](https://github.com/YOUR_USERNAME/10000-beers/wiki/Architecture)** - System design and code structure
-- **[Development Guide](https://github.com/YOUR_USERNAME/10000-beers/wiki/Development-Guide)** - Coding standards and contributing
-- **[Commands](https://github.com/YOUR_USERNAME/10000-beers/wiki/Commands)** - All available bot commands
+- **[Getting Started](https://github.com/gabrielg2020/10000-beers/wiki/Getting-Started)** - Detailed setup instructions
+- **[Configuration](https://github.com/gabrielg2020/10000-beers/wiki/Configuration)** - Complete environment variable reference
+- **[Architecture](https://github.com/gabrielg2020/10000-beers/wiki/Architecture)** - System design and code structure
+- **[Development Guide](https://github.com/gabrielg2020/10000-beers/wiki/Development-Guide)** - Coding standards and contributing
+- **[Commands](https://github.com/gabrielg2020/10000-beers/wiki/Commands)** - All available bot commands
 
 ## Prerequisites
 

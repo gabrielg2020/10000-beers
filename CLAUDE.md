@@ -1,137 +1,80 @@
-## Current work
-Implement undo command. any user can use !undo (no aliases), it will remove the last submission they made, they can only do this with submissions in the last 10 mins.
-
 ## Project
-A bot which will be deployed in a group chat with my friends called '10,000 beers'. The aim is to send a photo of a beer when you drink one. This bot should keep track of how many beers have been drunk and who drunk them.
-This project uses TypeScript with Postgres database. Core beer submission functionality is implemented.
+WhatsApp bot for tracking beer consumption in a group chat. Users send photos of beers, bot logs them with optional AI classification.
 
-## WhatsApp Authentication
-The bot uses LocalAuth with clientId '10000-beers' for session persistence.
-- Session stored in `.wwebjs_auth/session-10000-beers/`
-- Session persists across restarts (both dev and production)
-- Docker uses bind mount to share session between host and container
+**Tech stack:** TypeScript, PostgreSQL, Prisma ORM, WhatsApp Web (puppeteer), Google Gemini AI (optional)
 
-**First-time setup:**
-1. Run locally: `npm run dev`
-2. Scan QR code to authenticate
-3. Session is saved and will persist
+**Documentation:** See [GitHub Wiki](https://github.com/gabrielg2020/10000-beers/wiki) for comprehensive guides
 
-**Production deployment:**
-- Same session files used (via bind mount in docker-compose.yml)
-- No need to re-authenticate when deploying
-- Session survives container restarts
+## Quick Setup
+1. `npm install`
+2. Configure `.env` (see `.env.example`)
+3. `npm run dev` and scan QR code
+4. Session persists in `.wwebjs_auth/session-10000-beers/`
 
-**Hot reload behaviour:**
-- Hot reload (tsx watch) now works with session persistence
-- 2-second delay after client.destroy() ensures session data is flushed
-- Graceful Chrome shutdown (SIGTERM before SIGKILL) prevents corruption
+For detailed setup: [Wiki - Getting Started](https://github.com/gabrielg2020/10000-beers/wiki/Getting-Started)
 
 ## Structure
+```
 src/
-  index.ts               - App entry point with graceful shutdown
-  config/
-    index.ts             - Centralised configuration loader with validation
-    types.ts             - Configuration type definitions
-  handlers/
-    messageHandler.ts    - WhatsApp message routing and beer submission
-  services/
-    aiService.ts         - Gemini AI beer detection and classification
-    imageService.ts      - Image download, validation, storage, hashing
-    userService.ts       - User creation and lookup
-    beerService.ts       - Beer submission and duplicate detection
-  database/
-    schema.prisma        - Prisma schema (User, Beer models)
-    client.ts            - Prisma client with query logging
-  utils/
-    logger.ts            - Pino logger configuration
-    imageValidation.ts   - Image format and size validation
-    fileSystem.ts        - File operations and error handling
-  types/
-    image.ts             - Image operation types
-    submission.ts        - Beer submission types
-tests/
-  unit/
-    services/            - Service layer tests (userService, beerService, aiService)
-    handlers/            - Message handler tests
-    utils/               - Utility function tests
-  fixtures/images/       - Test image files
-system_instruction.md    - Gemini AI prompt for beer detection
-docker-compose.yml       - Local and production setup
-Dockerfile               - Bot container image
+├── index.ts              - App entry point
+├── config/               - Configuration loader and validation
+├── handlers/             - Message and command routing
+├── commands/             - Command implementations (!undo, !leaderboard, !removeLast)
+├── services/             - Business logic (beer, user, image, AI, statistics)
+├── database/             - Prisma schema and client
+├── types/                - TypeScript type definitions
+├── utils/                - Logging, validation, file operations
+└── whatsapp/             - WhatsApp client factory
+```
+
+For detailed architecture: [Wiki - Architecture](https://github.com/gabrielg2020/10000-beers/wiki/Architecture)
 
 ## Tooling
-- Biome for linting and formatting (biome.json) - do not suggest ESLint or Prettier
-- Jest for testing with Supertest for endpoint tests
-- Docker and docker-compose for local dev and production deployment
-- Postgres 16 (via Docker) with Prisma ORM
-- Winston or Pino for structured logging
+- **Biome** for linting and formatting - do not suggest ESLint or Prettier
+- **Jest** with ts-jest for testing
+- **Docker** and docker-compose for deployment
+- **PostgreSQL 16** with Prisma ORM
+- **Pino** for structured logging
 
-## Services and Utilities
-Always use existing services and utilities rather than duplicating logic:
+## Key Services
+Always use existing services rather than duplicating logic:
 
-**Services:**
-- `aiService.classifyBeer()` - Gemini API beer detection (returns isValid, beerType, confidence)
-- `userService.findOrCreateUser()` - Find or create user, update display name
-- `userService.getUserBeerCount()` - Get beer count for specific user
-- `userService.getTotalBeerCount()` - Get total beer count across all users
-- `beerService.submitBeer()` - Full beer submission flow (validation, storage, AI check, DB)
-- `beerService.checkDuplicate()` - Check for duplicate image submissions
-- `imageService.processImage()` - Download, validate, store images from WhatsApp
-- `imageService.calculateHash()` - SHA256 hash for duplicate detection
-- `messageHandler.handleMessage()` - Process WhatsApp messages for beer submissions
+- `beerService` - Beer submission, duplicate detection, removal
+- `userService` - User creation, lookup, beer counts
+- `imageService` - Image processing, validation, storage, hashing
+- `aiService` - Gemini AI beer classification
+- `statisticsService` - Leaderboard calculations
+- `commandRegistry` - Command registration and execution
 
-**Configuration:**
-- `config` - Centralised configuration singleton (loads from environment variables)
-  - `config.application.*` - Node environment, log level, environment flags
-  - `config.database.*` - Database connection URL
-  - `config.whatsapp.*` - Group ID, admin IDs
-  - `config.storage.*` - Image path, max size
-  - `config.bot.*` - Cooldown minutes, reply behaviour
-  - `config.ai.*` - AI enabled flag, confidence threshold, Gemini API key, model name
+For service details: [Wiki - Architecture](https://github.com/gabrielg2020/10000-beers/wiki/Architecture#service-layer)
 
-**Utilities:**
-- `validateMimetype()` - Check image format (JPEG, PNG, WebP, GIF)
-- `validateFileSize()` - Check image size limits
-- `validateImageBuffer()` - Verify image file integrity
-- `generateImageFilename()` - Create unique timestamped filenames
-- `logger` - Pino structured logging (info, debug, warn, error)
+## Code Style
+- Tabs for indentation, single quotes, named exports only
+- Always use explicit type annotations
+- Use `import type` for type-only imports
+- Comments sparingly, only where needed
+- Biome auto-formats on save
 
-## Code style
-- Tabs for indentation
-- Single quotes for TypeScript
-- ES module imports
-- Always use type annotations
-- Use type imports, regular imports for values
-- Use descriptive camelCase suffixes for variables and filenames for TypeScript
-- Use named exports
-- Use comments sparingly, only where needed
+For detailed standards: [Wiki - Development Guide](https://github.com/gabrielg2020/10000-beers/wiki/Development-Guide)
 
-## Testing
-- Arrange-Act-Assert pattern (no comments, just blank lines between sections)
-- Unit tests (tests/unit/) - business logic with mocked dependencies
-- 74 tests passing (services, handlers, utils, AI service)
-- Jest with ts-jest for TypeScript support
-- All dependencies mocked (Prisma, WhatsApp client, file system, Gemini API)
-- Required env vars set in tests/setup.ts for config module
+## Commands
+- `!undo` - Remove last beer submission (10-minute window, all users)
+- `!leaderboard` (aliases: `!lb`, `!top`) - Show rankings (admin only)
+- `!removeLast @user` - Remove user's last beer (admin only)
 
-## Security
+For command details: [Wiki - Commands](https://github.com/gabrielg2020/10000-beers/wiki/Commands)
 
-## Planned features
-- Admin deletion commands: `/remove @user last` or `/remove [beer_id]` to handle false positives or mistakes
-- Stats commands: `!stats`, `!leaderboard`, `!mystats`
-- Milestone celebrations (100, 500, 1000, 5000, 10000 beers)
+## Configuration
+Environment variables control all bot behaviour. Required: `DATABASE_URL`, `WHATSAPP_GROUP_ID`
 
-## Do not
-- Rewrite existing working fuctions unless asked
-- Change error handling patterns without flagging it
+For complete reference: [Wiki - Configuration](https://github.com/gabrielg2020/10000-beers/wiki/Configuration)
+
+## Do Not
+- Rewrite working functions unless asked
+- Change error handling patterns without flagging
 - Add new dependencies without asking
 - Rename files or reorganise folders without explicit instruction
 - Read .env files
-- Use the any type
-
-## Further context
-See /docs for domain model, data structure and architectural decisions:
-- docs/domain.md - domain entities, business rules, data model
-- docs/decisions.md - architectural and technology decisions with rationale
-
+- Use the `any` type
+- Suggest ESLint or Prettier (use Biome)
 
