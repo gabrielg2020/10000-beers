@@ -1,4 +1,4 @@
-# 10,000 Beers
+# 10,000 Beers 🍺
 
 A WhatsApp bot that tracks beer consumption for a group of friends. Send a photo of your beer, and the bot will log it with optional AI-powered beer type classification (can, bottle, or draught).
 
@@ -12,6 +12,16 @@ A WhatsApp bot that tracks beer consumption for a group of friends. Send a photo
 - PostgreSQL database with Prisma ORM
 - Duplicate detection via image hashing
 - Structured logging with Pino
+
+## Documentation
+
+For comprehensive guides and documentation, visit the **[Wiki](https://github.com/YOUR_USERNAME/10000-beers/wiki)**:
+
+- **[Getting Started](https://github.com/YOUR_USERNAME/10000-beers/wiki/Getting-Started)** - Detailed setup instructions
+- **[Configuration](https://github.com/YOUR_USERNAME/10000-beers/wiki/Configuration)** - Complete environment variable reference
+- **[Architecture](https://github.com/YOUR_USERNAME/10000-beers/wiki/Architecture)** - System design and code structure
+- **[Development Guide](https://github.com/YOUR_USERNAME/10000-beers/wiki/Development-Guide)** - Coding standards and contributing
+- **[Commands](https://github.com/YOUR_USERNAME/10000-beers/wiki/Commands)** - All available bot commands
 
 ## Prerequisites
 
