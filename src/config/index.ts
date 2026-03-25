@@ -138,6 +138,13 @@ function loadApplicationConfig(): ApplicationConfig {
 
 	const puppeteerExecutablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
 
+	const startupWaitSeconds = Number.parseInt(
+		getOptionalEnv('STARTUP_WAIT', '0'),
+		10,
+	);
+
+	validatePositiveInteger(startupWaitSeconds, 'STARTUP_WAIT');
+
 	return {
 		nodeEnv: nodeEnv as ApplicationConfig['nodeEnv'],
 		logLevel: logLevel as ApplicationConfig['logLevel'],
@@ -145,6 +152,7 @@ function loadApplicationConfig(): ApplicationConfig {
 		isProduction,
 		isTest,
 		puppeteerExecutablePath,
+		startupWaitSeconds,
 	};
 }
 

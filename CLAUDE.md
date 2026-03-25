@@ -1,5 +1,5 @@
 ## Current work
-Get everything containerised, currently the bot doesnt run in a container but the database does.
+Clean up index.ts
 
 ## Project
 A bot which will be deployed in a group chat with my friends called '10,000 beers'. The aim is to send a photo of a beer when you drink one. This bot should keep track of how many beers have been drunk and who drunk them.
