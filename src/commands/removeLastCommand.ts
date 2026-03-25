@@ -60,7 +60,7 @@ export class RemoveLastCommand implements Command {
 
 			return {
 				success: true,
-				reply: `Removed last beer for ${result.displayName} ✅`,
+				reply: `Removed beer #${result.beerNumber} for ${result.displayName} ✅`,
 			};
 		} catch (error) {
 			logger.error({ error, context }, 'Remove last beer command failed');

@@ -1,5 +1,5 @@
 ## Current work
-Move image storage to Backblaze B2
+Implement undo command. any user can use !undo (no aliases), it will remove the last submission they made, they can only do this with submissions in the last 10 mins.
 
 ## Project
 A bot which will be deployed in a group chat with my friends called '10,000 beers'. The aim is to send a photo of a beer when you drink one. This bot should keep track of how many beers have been drunk and who drunk them.

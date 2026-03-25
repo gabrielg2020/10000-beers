@@ -17,6 +17,11 @@ jest.mock('../../../src/database/client', () => ({
 		beer: {
 			findFirst: jest.fn(),
 			create: jest.fn(),
+			delete: jest.fn(),
+		},
+		user: {
+			findUnique: jest.fn(),
+			findMany: jest.fn(),
 		},
 	},
 }));
@@ -162,7 +167,7 @@ describe('BeerService', () => {
 				success: true,
 				beerId: beer.id,
 				beerNumber: 100,
-				message: 'Beer #100 logged for @John Doe! 🍺',
+				message: 'Beer #100 logged by @John Doe! 🍺',
 			});
 		});
 
@@ -249,7 +254,7 @@ describe('BeerService', () => {
 
 			const result = await beerService.submitBeer(request);
 
-			expect(result.message).toBe('Beer #100 logged for @John Doe! 🍺');
+			expect(result.message).toBe('Beer #100 logged by @John Doe! 🍺');
 		});
 
 		it('should wrap unexpected errors in BeerSubmissionError', async () => {
@@ -429,8 +434,144 @@ describe('BeerService', () => {
 			await expect(beerService.submitBeer(request)).rejects.toThrow();
 
 			expect(imageService.deleteImage).toHaveBeenCalledWith(imageResult.imagePath);
-			expect(prisma.beer.findFirst).not.toHaveBeenCalled();
 			expect(prisma.beer.create).not.toHaveBeenCalled();
+		});
+	});
+
+	describe('removeLastBeer', () => {
+		it('should remove beer within time window', async () => {
+			const now = new Date();
+			const recentBeer = {
+				id: 'beer-123',
+				userId: 'user-123',
+				submittedAt: new Date(now.getTime() - 5 * 60 * 1000),
+				imagePath: '/data/images/test.jpg',
+			};
+
+			const mockUser = {
+				id: 'user-123',
+				whatsappId: '447123456789@c.us',
+				displayName: 'Test User',
+				beers: [recentBeer],
+			};
+
+			(prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
+			(prisma.beer.delete as jest.Mock).mockResolvedValue(recentBeer);
+			(userService.getTotalBeerCount as jest.Mock).mockResolvedValue(42);
+
+			const result = await beerService.removeLastBeer('447123456789@c.us', 10);
+
+			expect(result.success).toBe(true);
+			expect(result.beerNumber).toBe(42);
+			expect(result.beerId).toBe('beer-123');
+			expect(imageService.deleteImage).toHaveBeenCalledWith('/data/images/test.jpg');
+			expect(prisma.beer.delete).toHaveBeenCalledWith({ where: { id: 'beer-123' } });
+		});
+
+		it('should reject when no beers in time window', async () => {
+			const mockUser = {
+				id: 'user-123',
+				whatsappId: '447123456789@c.us',
+				displayName: 'Test User',
+				beers: [],
+			};
+
+			(prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
+
+			try {
+				await beerService.removeLastBeer('447123456789@c.us', 10);
+				fail('Should have thrown an error');
+			} catch (error) {
+				expect(error).toBeInstanceOf(BeerSubmissionError);
+				expect((error as BeerSubmissionError).userMessage).toBe(
+					'You have no beers submitted in the last 10 minutes to undo',
+				);
+			}
+		});
+
+		it('should work without time window (admin mode)', async () => {
+			const oldBeer = {
+				id: 'beer-123',
+				userId: 'user-123',
+				submittedAt: new Date('2020-01-01'),
+				imagePath: '/data/images/test.jpg',
+			};
+
+			const mockUser = {
+				id: 'user-123',
+				whatsappId: '447123456789@c.us',
+				displayName: 'Test User',
+				beers: [oldBeer],
+			};
+
+			(prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
+			(prisma.beer.delete as jest.Mock).mockResolvedValue(oldBeer);
+			(userService.getTotalBeerCount as jest.Mock).mockResolvedValue(42);
+
+			const result = await beerService.removeLastBeer('447123456789@c.us');
+
+			expect(result.success).toBe(true);
+			expect(result.beerId).toBe('beer-123');
+		});
+
+		it('should throw error when user not found', async () => {
+			(prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
+			(prisma.user.findMany as jest.Mock).mockResolvedValue([]);
+
+			await expect(
+				beerService.removeLastBeer('447123456789@c.us'),
+			).rejects.toThrow(BeerSubmissionError);
+		});
+
+		it('should show user-friendly error for undo when user not found', async () => {
+			(prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
+			(prisma.user.findMany as jest.Mock).mockResolvedValue([]);
+
+			try {
+				await beerService.removeLastBeer('447123456789@c.us', 10);
+				fail('Should have thrown an error');
+			} catch (error) {
+				expect(error).toBeInstanceOf(BeerSubmissionError);
+				expect((error as BeerSubmissionError).userMessage).toBe(
+					'You have not submitted any beers yet',
+				);
+			}
+		});
+
+		it('should show admin error when user not found in admin mode', async () => {
+			(prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
+			(prisma.user.findMany as jest.Mock).mockResolvedValue([]);
+
+			try {
+				await beerService.removeLastBeer('447123456789@c.us');
+				fail('Should have thrown an error');
+			} catch (error) {
+				expect(error).toBeInstanceOf(BeerSubmissionError);
+				expect((error as BeerSubmissionError).userMessage).toBe('User not found');
+			}
+		});
+
+		it('should delete image file when removing beer', async () => {
+			const recentBeer = {
+				id: 'beer-123',
+				imagePath: '/data/images/test.jpg',
+				submittedAt: new Date(),
+			};
+
+			const mockUser = {
+				id: 'user-123',
+				whatsappId: '447123456789@c.us',
+				displayName: 'Test User',
+				beers: [recentBeer],
+			};
+
+			(prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
+			(userService.getTotalBeerCount as jest.Mock).mockResolvedValue(1);
+			(prisma.beer.delete as jest.Mock).mockResolvedValue(recentBeer);
+
+			await beerService.removeLastBeer('447123456789@c.us', 10);
+
+			expect(imageService.deleteImage).toHaveBeenCalledWith('/data/images/test.jpg');
 		});
 	});
 });

@@ -93,7 +93,7 @@ export class BeerService {
         throw new BeerSubmissionError(
           `AI rejected beer submission: ${aiResult.error}`,
           'AI_VALIDATION_FAILED',
-          "",
+          "Doesn't look like a beer to me mate 🤔",
         );
       }
 
@@ -147,13 +147,24 @@ export class BeerService {
     }
   }
 
-  async removeLastBeer(whatsappId: string): Promise<{ success: boolean; displayName: string; beerId: string }> {
-    logger.debug({ whatsappId }, 'Looking up user for beer removal');
+  async removeLastBeer(
+    whatsappId: string,
+    timeWindowMinutes?: number
+  ): Promise<{ success: boolean; displayName: string; beerId: string; beerNumber: number }> {
+    logger.debug({ whatsappId, timeWindowMinutes }, 'Looking up user for beer removal');
+
+    const whereConditions: { submittedAt?: { gte: Date } } = {};
+
+    if (timeWindowMinutes !== undefined) {
+      const cutoffTime = new Date(Date.now() - timeWindowMinutes * 60 * 1000);
+      whereConditions.submittedAt = { gte: cutoffTime };
+    }
 
     const user = await prisma.user.findUnique({
       where: { whatsappId },
       include: {
         beers: {
+          where: whereConditions,
           orderBy: { submittedAt: 'desc' },
           take: 1,
         },
@@ -171,19 +182,26 @@ export class BeerService {
       throw new BeerSubmissionError(
         'User not found',
         'USER_NOT_FOUND',
-        'User not found',
+        timeWindowMinutes !== undefined
+          ? 'You have not submitted any beers yet'
+          : 'User not found',
       );
     }
 
     if (user.beers.length === 0) {
+      const errorMessage = timeWindowMinutes !== undefined
+        ? `You have no beers submitted in the last ${timeWindowMinutes} minutes to undo`
+        : 'This user has no beers to remove';
+
       throw new BeerSubmissionError(
         'No beers to remove',
         'NO_BEERS',
-        'This user has no beers to remove',
+        errorMessage,
       );
     }
 
     const lastBeer = user.beers[0];
+    const totalCountBefore = await userService.getTotalBeerCount();
 
     await imageService.deleteImage(lastBeer.imagePath);
 
@@ -192,7 +210,7 @@ export class BeerService {
     });
 
     logger.info(
-      { beerId: lastBeer.id, userId: user.id, whatsappId },
+      { beerId: lastBeer.id, userId: user.id, whatsappId, timeWindowMinutes, submittedAt: lastBeer.submittedAt },
       'Beer removed successfully',
     );
 
@@ -200,6 +218,7 @@ export class BeerService {
       success: true,
       displayName: user.displayName,
       beerId: lastBeer.id,
+      beerNumber: totalCountBefore,
     };
   }
 }
