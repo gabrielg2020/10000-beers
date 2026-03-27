@@ -30,6 +30,24 @@ export interface GroupStatistics {
   beersUntilMilestone: number;
 }
 
+export interface PeriodStats {
+  totalBeers: number;
+  topDrinker: {
+    displayName: string;
+    beerCount: number;
+  } | null;
+}
+
+export interface DualPeriodStats {
+  calendar: PeriodStats;
+  rolling: PeriodStats;
+}
+
+export interface WeekendStats {
+  thisWeekend?: PeriodStats;
+  lastWeekend: PeriodStats;
+}
+
 export class CommandError extends Error {
   constructor(
     message: string,
