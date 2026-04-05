@@ -84,13 +84,12 @@ export class AiService {
 
       return this.validateClassification(classification);
     } catch (error) {
-      // If AI fails, auto-accept
-      logger.error({ error, imagePath }, 'AI classification failed, auto-accepting');
+      logger.error({ error, imagePath }, 'AI classification failed, rejecting submission');
       return {
-        isValid: true,
+        isValid: false,
         beerType: null,
-        confidence: 1.0,
-        error: 'AI service unavailable',
+        confidence: 0,
+        error: 'AI service unavailable, please try again',
       };
     }
   }

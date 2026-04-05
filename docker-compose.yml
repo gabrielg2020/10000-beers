@@ -9,8 +9,6 @@ services:
       POSTGRES_DB: beers
     volumes:
       - pgdata:/var/lib/postgresql/data
-    ports:
-      - '5432:5432'
     networks:
       - beers-network
     healthcheck:
@@ -18,24 +16,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    container_name: beers-pgadmin
-    restart: unless-stopped
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@localhost.com}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
-      PGADMIN_CONFIG_SERVER_MODE: 'False'
-      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
-    volumes:
-      - pgadmin-data:/var/lib/pgadmin
-    ports:
-      - '5050:80'
-    networks:
-      - beers-network
-    depends_on:
-      - postgres
 
   bot:
     image: ghcr.io/gabrielg2020/10000-beers:latest
@@ -66,8 +46,6 @@ services:
 
 volumes:
   pgdata:
-    driver: local
-  pgadmin-data:
     driver: local
   images:
     driver: local

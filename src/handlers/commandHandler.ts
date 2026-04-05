@@ -1,6 +1,6 @@
 import type { Message } from 'whatsapp-web.js';
 import { commandRegistry } from '../commands/commandRegistry';
-import { logger } from '../utils/logger';
+import { logger, redactWhatsAppId } from '../utils/logger';
 import type { CommandContext } from '../commands/types';
 import { CommandError } from '../types/statistics';
 import { config } from '../config';
@@ -55,7 +55,7 @@ export class CommandHandler {
 
       if (command.adminOnly && !this.isAdmin(whatsappId)) {
         logger.warn(
-          { commandName, whatsappId },
+          { commandName, whatsappId: redactWhatsAppId(whatsappId) },
           'Non-admin attempted to use admin command'
         );
         await message.reply('This command is only available to administrators');
@@ -70,7 +70,7 @@ export class CommandHandler {
 			};
 
 			logger.info(
-				{ command: command.name, whatsappId, args },
+				{ command: command.name, whatsappId: redactWhatsAppId(whatsappId), args },
 				'Executing command',
 			);
 

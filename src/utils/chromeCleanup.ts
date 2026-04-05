@@ -1,4 +1,4 @@
-import { execSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import { unlink } from 'node:fs/promises';
 import { logger } from './logger';
 
@@ -11,23 +11,18 @@ async function waitForProcessToClose(maxWaitMs = MAX_WAIT_MS): Promise<boolean> 
 	let attemptCount = 0;
 
 	while (Date.now() - startTime < maxWaitMs) {
-		try {
-			const result = execSync(`pgrep -f "chrome.*${SESSION_PATH}"`, { encoding: 'utf8' });
+		const { stdout: result, status } = spawnSync('pgrep', ['-f', `chrome.*${SESSION_PATH}`], { encoding: 'utf8' });
 
-			if (!result.trim()) {
-				logger.info('Chrome process closed successfully');
-				return true;
-			}
-
-			attemptCount++;
-			if (attemptCount % 3 === 0) {
-				logger.info(`Waiting for Chrome to close... (${Math.floor((Date.now() - startTime) / 1000)}s)`);
-			}
-			await new Promise((resolve) => setTimeout(resolve, 1000));
-		} catch {
+		if (status !== 0 || !result.trim()) {
 			logger.info('Chrome process closed successfully');
 			return true;
 		}
+
+		attemptCount++;
+		if (attemptCount % 3 === 0) {
+			logger.info(`Waiting for Chrome to close... (${Math.floor((Date.now() - startTime) / 1000)}s)`);
+		}
+		await new Promise((resolve) => setTimeout(resolve, 1000));
 	}
 
 	return false;
@@ -36,27 +31,25 @@ async function waitForProcessToClose(maxWaitMs = MAX_WAIT_MS): Promise<boolean> 
 async function killChromeProcess(): Promise<void> {
 	logger.warn('Chrome did not close gracefully - sending SIGTERM');
 
-	try {
-		execSync(`pkill -TERM -f "chrome.*${SESSION_PATH}"`);
-		await new Promise((resolve) => setTimeout(resolve, 3000));
+	const termResult = spawnSync('pkill', ['-TERM', '-f', `chrome.*${SESSION_PATH}`]);
 
-		try {
-			const result = execSync(`pgrep -f "chrome.*${SESSION_PATH}"`, { encoding: 'utf8' });
-			if (!result.trim()) {
-				logger.info('Chrome closed after SIGTERM');
-				return;
-			}
-		} catch {
-			logger.info('Chrome closed after SIGTERM');
-			return;
-		}
-
-		logger.error('Chrome still running - using SIGKILL (session may be corrupted)');
-		execSync(`pkill -9 -f "chrome.*${SESSION_PATH}"`);
-		await new Promise((resolve) => setTimeout(resolve, 2000));
-	} catch (error) {
+	if (termResult.status !== 0) {
 		logger.debug('No Chrome processes to kill');
+		return;
 	}
+
+	await new Promise((resolve) => setTimeout(resolve, 3000));
+
+	const { stdout: result, status } = spawnSync('pgrep', ['-f', `chrome.*${SESSION_PATH}`], { encoding: 'utf8' });
+
+	if (status !== 0 || !result.trim()) {
+		logger.info('Chrome closed after SIGTERM');
+		return;
+	}
+
+	logger.error('Chrome still running - using SIGKILL (session may be corrupted)');
+	spawnSync('pkill', ['-9', '-f', `chrome.*${SESSION_PATH}`]);
+	await new Promise((resolve) => setTimeout(resolve, 2000));
 }
 
 async function removeStaleLockFiles(): Promise<void> {

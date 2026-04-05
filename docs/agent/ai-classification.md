@@ -1,10 +1,10 @@
 # AI Classification
 
-## Auto-Accept on Failure
+## Fail Closed When AI Enabled
 
-**Why**: Matches behaviour when AI is disabled. Honour system — trust that photos sent are beers. If AI fails and we reject, someone would need to change `.env` and restart the bot. Kills the game flow.
+**Behaviour**: When `AI_ENABLED=true` and the Gemini API errors (network issues, parsing failures, etc.), the submission is **rejected** and the user is asked to retry. This prevents untrusted images bypassing validation.
 
-**What fails**: Gemini API errors, network issues, parsing failures. All result in auto-accept with `beerType = null` and `confidence = 1.0`.
+**When AI disabled**: Auto-accept still applies — honour system as before.
 
 **Real-world**: ~300 real beers tracked, zero rejections so far.
 

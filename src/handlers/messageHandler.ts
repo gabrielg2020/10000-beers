@@ -1,5 +1,5 @@
 import { Message } from "whatsapp-web.js";
-import { logger } from "../utils/logger";
+import { logger, redactWhatsAppId } from "../utils/logger";
 import { BeerImageData, BeerSubmissionError, BeerSubmissionRequest } from "../types/submission";
 import { beerService } from "../services/beerService";
 import { config } from "../config";
@@ -97,11 +97,11 @@ export class MessageHandler {
 
       if (result.message) {
         logger.debug(
-          { whatsappId, messageLength: result.message.length },
+          { whatsappId: redactWhatsAppId(whatsappId), messageLength: result.message.length },
           'Sending beer submission reply',
         );
         await message.reply(result.message);
-        logger.info({ whatsappId }, 'Beer submission reply sent successfully');
+        logger.info({ whatsappId: redactWhatsAppId(whatsappId) }, 'Beer submission reply sent successfully');
       }
     } catch (error) {
       if (error instanceof BeerSubmissionError) {

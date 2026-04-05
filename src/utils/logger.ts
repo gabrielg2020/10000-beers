@@ -24,4 +24,14 @@ export const logger = pino({
 	}),
 });
 
+export function redactWhatsAppId(whatsappId: string | undefined | null): string {
+	if (!whatsappId) return 'unknown';
+	const atIndex = whatsappId.indexOf('@');
+	if (atIndex < 6) return '***';
+	const prefix = whatsappId.slice(0, 3);
+	const suffix = whatsappId.slice(atIndex - 3, atIndex);
+	const domain = whatsappId.slice(atIndex);
+	return `${prefix}***${suffix}${domain}`;
+}
+
 export type Logger = typeof logger;

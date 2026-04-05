@@ -28,6 +28,14 @@ export class ReleaseCommand implements Command {
 
 			// Get specific version if provided, otherwise latest
 			const version = context.args[0];
+
+			if (version && !/^[a-zA-Z0-9._-]+$/.test(version)) {
+				return {
+					success: false,
+					reply: 'Invalid version format. Use something like v1.0.0',
+				};
+			}
+
 			const release = await this.fetchRelease(version);
 
 			const reply = this.formatRelease(release);

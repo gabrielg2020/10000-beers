@@ -1,7 +1,7 @@
 import { config } from "../config";
 import { prisma } from "../database";
 import { BeerSubmissionError, BeerSubmissionRequest, BeerSubmissionResult, DuplicateCheckResult } from "../types/submission";
-import { logger } from "../utils/logger";
+import { logger, redactWhatsAppId } from "../utils/logger";
 import { aiService } from "./aiService";
 import { imageService } from "./imageService";
 import { userService } from "./userService";
@@ -137,7 +137,7 @@ export class BeerService {
         throw error
       }
 
-      logger.error({ error, whatsappId, messageId }, 'Beer submission failed');
+      logger.error({ error, whatsappId: redactWhatsAppId(whatsappId), messageId }, 'Beer submission failed');
 
       throw new BeerSubmissionError(
         'Failed to submit beer',
@@ -172,7 +172,7 @@ export class BeerService {
     });
 
     if (!user) {
-      logger.warn({ whatsappId }, 'User not found for beer removal');
+      logger.warn({ whatsappId: redactWhatsAppId(whatsappId) }, 'User not found for beer removal');
 
       throw new BeerSubmissionError(
         'User not found',

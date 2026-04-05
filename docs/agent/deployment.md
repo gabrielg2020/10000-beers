@@ -4,10 +4,18 @@
 
 **Where**: Raspberry Pi 4, running on local machine at home
 
-**How**: Docker Compose with three services:
-- `postgres` (PostgreSQL 16)
-- `pgadmin` (database admin UI)
+**How**: Docker Compose with two services (production):
+- `postgres` (PostgreSQL 16) — no port exposed to host, internal network only
 - `bot` (Node.js application)
+
+**Development overrides**: `docker-compose.dev.yml` adds:
+- `pgadmin` (database admin UI on port 5050)
+- Postgres port exposed on 5432
+
+Run dev setup with:
+```
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+```
 
 **Track record**: All smooth sailing so far. No crashes, no restores needed.
 
