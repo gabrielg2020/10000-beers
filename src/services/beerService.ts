@@ -174,11 +174,6 @@ export class BeerService {
     if (!user) {
       logger.warn({ whatsappId }, 'User not found for beer removal');
 
-      const allUsers = await prisma.user.findMany({
-        select: { whatsappId: true, displayName: true },
-      });
-      logger.debug({ allUsers, searchedId: whatsappId }, 'All users in database');
-
       throw new BeerSubmissionError(
         'User not found',
         'USER_NOT_FOUND',
