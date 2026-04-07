@@ -56,8 +56,9 @@ FROM base AS production
 # Copy package files
 COPY package*.json ./
 
-# Copy Prisma schema first
+# Copy Prisma schema and migrations
 COPY --from=build /app/src/database/schema.prisma ./src/database/schema.prisma
+COPY --from=build /app/src/database/migrations ./src/database/migrations
 
 # Install production dependencies (skip scripts)
 RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
@@ -75,8 +76,12 @@ COPY --from=build /app/src/system_instruction.md ./src/system_instruction.md
 # Copy health check script
 COPY healthcheck.js ./healthcheck.js
 
+# Copy entrypoint script
+COPY entrypoint.sh ./entrypoint.sh
+
 # Create directories for data persistence
 RUN mkdir -p /data/images /app/.wwebjs_auth /app/.wwebjs_cache && \
+    chmod +x /app/entrypoint.sh && \
     chown -R node:node /data /app
 
 # Switch to non-root user for security
@@ -86,4 +91,4 @@ USER node
 EXPOSE 3000
 
 # Start the bot
-CMD ["node", "dist/index.js"]
+ENTRYPOINT ["/app/entrypoint.sh"]

@@ -2,7 +2,7 @@
 
 ## Production Setup
 
-**Where**: Raspberry Pi 4, running on local machine at home
+**Where**: Mini PC (8th gen i5, 16GB RAM, 256GB SSD) running Ubuntu Server
 
 **How**: Docker Compose with two services (production):
 - `postgres` (PostgreSQL 16) — no port exposed to host, internal network only
@@ -16,6 +16,8 @@ Run dev setup with:
 ```
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up
 ```
+
+**Migrations**: Run automatically on container start via `entrypoint.sh` (`prisma migrate deploy`). If a migration fails, the bot won't start — fail fast by design.
 
 **Track record**: All smooth sailing so far. No crashes, no restores needed.
 
