@@ -56,9 +56,10 @@ FROM base AS production
 # Copy package files
 COPY package*.json ./
 
-# Copy Prisma schema and migrations
+# Copy Prisma schema, migrations, and config
 COPY --from=build /app/src/database/schema.prisma ./src/database/schema.prisma
 COPY --from=build /app/src/database/migrations ./src/database/migrations
+COPY --from=build /app/prisma.config.ts ./prisma.config.ts
 
 # Install production dependencies (skip scripts)
 RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
