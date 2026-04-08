@@ -18,9 +18,15 @@
 
 ## System Instruction in MD File
 
-**Why separate file**: Quick iteration and testing. If changing models or services, can test fast and fail fast. Hasn't changed since launch, but makes experimentation easier.
+**Why separate file**: Quick iteration and testing. If changing models or services, can test fast and fail fast. Makes experimentation easier.
 
-**Location**: `src/system_instruction.md` — loaded at AI service initialisation.
+**Location**: `src/system_instruction.md` — loaded once at AI service initialisation (`aiService.initialise()`). Edits require a bot restart to take effect.
+
+## Cider Counts as Beer
+
+The classifier accepts both beer and cider as valid submissions and treats them equivalently. The JSON field is still named `beer_detected` for historical reasons — it returns `true` for either drink. Other alcoholic beverages (wine, spirits) are still rejected.
+
+**Why**: Group includes cider drinkers; rejecting their submissions felt arbitrary given the bot's casual, honour-system spirit.
 
 ## Cost Optimisation
 

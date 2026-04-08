@@ -17,32 +17,32 @@ services:
       timeout: 5s
       retries: 5
 
-  bot:
-    image: ghcr.io/gabrielg2020/10000-beers:latest
-    container_name: beers-bot
-    pull_policy: always
-    restart: unless-stopped
-    env_file:
-      - .env
-    environment:
-      DATABASE_URL: postgresql://beers:${POSTGRES_PASSWORD:-beers_dev_password}@postgres:5432/beers
-      NODE_ENV: ${NODE_ENV:-production}
-      IMAGE_STORAGE_PATH: /data/images
-    volumes:
-      - ./.wwebjs_auth:/app/.wwebjs_auth
-      - ./.wwebjs_cache:/app/.wwebjs_cache
-      - images:/data/images
-    networks:
-      - beers-network
-    depends_on:
-      postgres:
-        condition: service_healthy
-    healthcheck:
-      test: ['CMD', 'node', '/app/healthcheck.js']
-      interval: 45s
-      timeout: 15s
-      retries: 3
-      start_period: 90s
+  # bot:
+  #   image: ghcr.io/gabrielg2020/10000-beers:latest
+  #   container_name: beers-bot
+  #   pull_policy: always
+  #   restart: unless-stopped
+  #   env_file:
+  #     - .env
+  #   environment:
+  #     DATABASE_URL: postgresql://beers:${POSTGRES_PASSWORD:-beers_dev_password}@postgres:5432/beers
+  #     NODE_ENV: ${NODE_ENV:-production}
+  #     IMAGE_STORAGE_PATH: /data/images
+  #   volumes:
+  #     - ./.wwebjs_auth:/app/.wwebjs_auth
+  #     - ./.wwebjs_cache:/app/.wwebjs_cache
+  #     - images:/data/images
+  #   networks:
+  #     - beers-network
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #   healthcheck:
+  #     test: ['CMD', 'node', '/app/healthcheck.js']
+  #     interval: 45s
+  #     timeout: 15s
+  #     retries: 3
+  #     start_period: 90s
 
 volumes:
   pgdata:
