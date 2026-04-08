@@ -8,12 +8,6 @@ import { userService } from "./userService";
 import { MessageMedia } from "whatsapp-web.js";
 
 export class BeerService {
-  private readonly replyOnSubmission: boolean;
-
-  constructor() {
-    this.replyOnSubmission = config.bot.replyOnSubmission
-  }
-
   async checkDuplicate(
     userId: string,
     imageHash: string,
@@ -93,7 +87,7 @@ export class BeerService {
         throw new BeerSubmissionError(
           `AI rejected beer submission: ${aiResult.error}`,
           'AI_VALIDATION_FAILED',
-          "Doesn't look like a beer to me mate 🤔",
+          config.bot.replyOnSubmission ? "Doesn't look like a beer to me mate 🤔" : '',
         );
       }
 

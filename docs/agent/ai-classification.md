@@ -25,3 +25,9 @@
 ## Cost Optimisation
 
 Duplicate check happens *before* AI classification (see beer-submission-flow.md). Don't pay for API calls on images that won't be counted.
+
+## Silencing AI Rejection Replies
+
+`REPLY_ON_SUBMISSION=false` suppresses the "Doesn't look like a beer to me mate 🤔" reply on AI rejection. The image is still deleted and the rejection is still logged at warn level — only the WhatsApp reply is silenced. Useful when the group is sharing lots of non-beer photos and the bot's chatter becomes noise.
+
+Other rejection paths (duplicate, generic failure) still reply regardless of this flag.

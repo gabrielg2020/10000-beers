@@ -134,7 +134,7 @@ For comprehensive guides and documentation, visit the **[Wiki](https://github.co
 | `IMAGE_STORAGE_PATH` | `/data/images` | Directory for storing beer images |
 | `MAX_IMAGE_SIZE_MB` | `10` | Maximum image size in megabytes |
 | `SUBMISSION_COOLDOWN_MINUTES` | `0` | Minimum time between submissions per user |
-| `REPLY_ON_SUBMISSION` | `true` | Send WhatsApp reply on successful submission |
+| `REPLY_ON_SUBMISSION` | `true` | When `false`, suppress the AI rejection reply ("Doesn't look like a beer to me mate") |
 | `AI_ENABLED` | `false` | Enable AI beer classification |
 | `AI_CONFIDENCE_THRESHOLD` | `0.9` | Minimum confidence for AI classification (0.0-1.0) |
 | `GEMINI_API_KEY` | _(required if AI enabled)_ | Google Gemini API key |

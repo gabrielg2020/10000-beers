@@ -4,6 +4,7 @@ process.env.REPLY_ON_SUBMISSION = 'true';
 process.env.AI_ENABLED = 'false';
 
 import { beerService } from '../../../src/services/beerService';
+import { config } from '../../../src/config';
 import { prisma } from '../../../src/database/client';
 import { imageService } from '../../../src/services/imageService';
 import { userService } from '../../../src/services/userService';
@@ -60,7 +61,7 @@ jest.mock('whatsapp-web.js');
 describe('BeerService', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
-		process.env.REPLY_ON_SUBMISSION = 'true';
+		config.bot.replyOnSubmission = true;
 	});
 
 	describe('checkDuplicate', () => {
@@ -217,7 +218,9 @@ describe('BeerService', () => {
 			expect(prisma.beer.create).not.toHaveBeenCalled();
 		});
 
-		it('should include message when REPLY_ON_SUBMISSION is true', async () => {
+		it('should suppress AI rejection message when replyOnSubmission is false', async () => {
+			config.bot.replyOnSubmission = false;
+
 			const request = createMockRequest();
 			const userInfo = {
 				id: 'user-123',
@@ -231,30 +234,28 @@ describe('BeerService', () => {
 				sizeBytes: 1024,
 			};
 			const aiResult = {
-				isValid: true,
-				beerType: 'draught' as const,
-				confidence: 0.88,
-			};
-			const beer = {
-				id: 'beer-789',
-				userId: userInfo.id,
-				submittedAt: request.submittedAt,
-				imagePath: imageResult.imagePath,
-				imageHash: imageResult.imageHash,
-				beerType: 'draught',
-				classificationConfidence: 0.88,
+				isValid: false,
+				beerType: null,
+				confidence: 0.4,
+				error: 'No beer detected in image',
 			};
 
 			(userService.findOrCreateUser as jest.Mock).mockResolvedValue(userInfo);
 			(imageService.processImage as jest.Mock).mockResolvedValue(imageResult);
 			(aiService.classifyBeer as jest.Mock).mockResolvedValue(aiResult);
 			(prisma.beer.findFirst as jest.Mock).mockResolvedValue(null);
-			(prisma.beer.create as jest.Mock).mockResolvedValue(beer);
-			(userService.getTotalBeerCount as jest.Mock).mockResolvedValue(100);
 
-			const result = await beerService.submitBeer(request);
+			try {
+				await beerService.submitBeer(request);
+				fail('Should have thrown an error');
+			} catch (error) {
+				expect(error).toBeInstanceOf(BeerSubmissionError);
+				expect((error as BeerSubmissionError).code).toBe('AI_VALIDATION_FAILED');
+				expect((error as BeerSubmissionError).userMessage).toBe('');
+			}
 
-			expect(result.message).toBe('Beer #100 logged by @John Doe! 🍺');
+			expect(imageService.deleteImage).toHaveBeenCalledWith(imageResult.imagePath);
+			expect(prisma.beer.create).not.toHaveBeenCalled();
 		});
 
 		it('should wrap unexpected errors in BeerSubmissionError', async () => {
