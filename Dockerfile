@@ -1,5 +1,5 @@
 # Multi-stage build for production efficiency
-FROM node:20-bookworm-slim AS base
+FROM node:22-bookworm-slim AS base
 
 # Install dependencies for Chromium (required by Puppeteer/whatsapp-web.js)
 RUN apt-get update && apt-get install -y \

@@ -18,8 +18,7 @@ services:
       retries: 5
 
   bot:
-    # image: ghcr.io/gabrielg2020/10000-beers:latest
-    build: .
+    image: ghcr.io/gabrielg2020/10000-beers:latest
     container_name: beers-bot
     pull_policy: always
     restart: unless-stopped
