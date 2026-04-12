@@ -24,6 +24,16 @@
 
 **After**: Admin-only. Stops spam, keeps chat clean.
 
+**Time periods** (optional — no argument shows all-time leaderboard):
+- `!lb day` — today (midnight to now)
+- `!lb week` — this week (Monday to now)
+- `!lb month` — this month (1st to now)
+- `!lb weekend` — this weekend (Fri-Sun) or last weekend (Mon-Thu)
+
+**Why single period, not dual**: Unlike `!stats` which shows both calendar and rolling windows, the leaderboard only shows the calendar period. Ranking users over a rolling window adds noise — "this week" and "this month" are intuitive enough.
+
+**Shared date logic**: Period date ranges live in `src/utils/dateRanges.ts`, shared with `!stats`. The leaderboard uses `getLeaderboardForPeriod` in `statisticsService` which queries beer counts per user within the date range.
+
 ## Release Command (!release)
 
 **Why it exists**: Admins can check latest bot changes without cluttering chat. Frees up conversation flow.

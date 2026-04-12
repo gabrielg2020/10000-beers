@@ -69,6 +69,10 @@ Always use existing services rather than duplicating logic:
 ## Commands
 - `!undo` — remove last beer submission (10-minute window, own submissions only)
 - `!leaderboard` (aliases: `!lb`, `!top`) — show rankings (admin only)
+  - `!lb day` — today
+  - `!lb week` — this week (Monday to now)
+  - `!lb month` — this month
+  - `!lb weekend` — this weekend (Fri-Sun) or last weekend (Mon-Thu)
 - `!removeLast @user` — remove a user's last beer (admin only, no time restriction)
 - `!release` — show latest release notes from GitHub (admin only)
 - `!stats <period>` — show group drinking statistics (everyone can use)

@@ -1,6 +1,7 @@
 import { statisticsService } from '../services/statisticsService';
 import type { DualPeriodStats, WeekendStats } from '../types/statistics';
 import { CommandError } from '../types/statistics';
+import { isValidPeriod } from '../utils/dateRanges';
 import { logger } from '../utils/logger';
 import type { Command, CommandContext, CommandResult } from './types';
 
@@ -15,7 +16,7 @@ export class StatsCommand implements Command {
 		try {
 			const period = context.args[0]?.toLowerCase();
 
-			if (!period || !['day', 'week', 'month', 'weekend'].includes(period)) {
+			if (!period || !isValidPeriod(period)) {
 				return {
 					success: true,
 					reply:

@@ -1,9 +1,16 @@
 import { statisticsService } from '../services/statisticsService';
-import { CommandError, LeaderboardResult } from '../types/statistics';
+import type { LeaderboardResult } from '../types/statistics';
+import { CommandError } from '../types/statistics';
+import {
+	getCalendarRange,
+	getWeekendRanges,
+	isValidPeriod,
+} from '../utils/dateRanges';
+import type { TimePeriod } from '../utils/dateRanges';
 import { logger } from '../utils/logger';
-import { Command, CommandContext, CommandResult } from './types';
+import type { Command, CommandContext, CommandResult } from './types';
 
-export class LeaderbaordCommand implements Command {
+export class LeaderboardCommand implements Command {
 	readonly name = 'leaderboard';
 	readonly aliases = ['lb', 'top'];
 	readonly description = 'Show beer leaderboard for all users';
@@ -11,39 +18,107 @@ export class LeaderbaordCommand implements Command {
 
 	async execute(context: CommandContext): Promise<CommandResult> {
 		try {
-			logger.debug(
-				{ whatsappId: context.whatsappId },
-				'Executing leaderboard command',
-			);
+			const period = context.args[0]?.toLowerCase();
 
-			const leaderboard = await statisticsService.getLeaderboard();
-
-			if (leaderboard.entries.length === 0) {
+			if (period && !isValidPeriod(period)) {
 				return {
 					success: true,
-					reply: 'No beers have been logged yet! 🍺',
+					reply:
+						'Invalid period. Use: !lb, !lb day, !lb week, !lb month, or !lb weekend',
 				};
 			}
 
-			const reply = this.formatLeaderboard(leaderboard);
+			logger.debug(
+				{ whatsappId: context.whatsappId, period: period ?? 'all-time' },
+				'Executing leaderboard command',
+			);
 
-			return {
-				success: true,
-				reply,
-			};
+			if (!period) {
+				const leaderboard = await statisticsService.getLeaderboard();
+				return this.buildResult(leaderboard, '🏆 *Beer Leaderboard* 🍺');
+			}
+
+			return await this.executeForPeriod(period as TimePeriod);
 		} catch (error) {
 			logger.error({ error, context }, 'Leaderboard command failed');
 
-			throw new CommandError( 
+			throw new CommandError(
 				'failed to generate leaderboard',
 				'LEADERBOARD_FAILED',
-				'Failed to laod leaderboard, Please try again', 
+				'Failed to load leaderboard. Please try again.',
 			);
 		}
 	}
 
-	private formatLeaderboard(leaderboard: LeaderboardResult): string { 
-		const lines: string[] = ['🏆 *Beer Leaderboard* 🍺', ''];
+	private async executeForPeriod(
+		period: TimePeriod,
+	): Promise<CommandResult> {
+		if (period === 'weekend') {
+			return this.executeWeekendLeaderboard();
+		}
+
+		const range = getCalendarRange(period);
+		const leaderboard = await statisticsService.getLeaderboardForPeriod(
+			range.start,
+			range.end,
+		);
+		const titles: Record<string, string> = {
+			day: '🏆 *Beer Leaderboard — Today* 🍺',
+			week: '🏆 *Beer Leaderboard — This Week* 🍺',
+			month: '🏆 *Beer Leaderboard — This Month* 🍺',
+		};
+
+		return this.buildResult(leaderboard, titles[period]);
+	}
+
+	private async executeWeekendLeaderboard(): Promise<CommandResult> {
+		const ranges = getWeekendRanges();
+
+		if (ranges.thisWeekend) {
+			const leaderboard = await statisticsService.getLeaderboardForPeriod(
+				ranges.thisWeekend.start,
+				ranges.thisWeekend.end,
+			);
+			return this.buildResult(
+				leaderboard,
+				'🏆 *Beer Leaderboard — This Weekend* 🍺',
+			);
+		}
+
+		const leaderboard = await statisticsService.getLeaderboardForPeriod(
+			ranges.lastWeekend.start,
+			ranges.lastWeekend.end,
+		);
+		return this.buildResult(
+			leaderboard,
+			'🏆 *Beer Leaderboard — Last Weekend* 🍺',
+		);
+	}
+
+	private buildResult(
+		leaderboard: LeaderboardResult,
+		title: string,
+	): CommandResult {
+		if (leaderboard.entries.length === 0) {
+			return {
+				success: true,
+				reply: 'No beers have been logged yet! 🍺',
+			};
+		}
+
+		const reply = this.formatLeaderboard(leaderboard, title);
+
+		return {
+			success: true,
+			reply,
+		};
+	}
+
+	private formatLeaderboard(
+		leaderboard: LeaderboardResult,
+		title: string,
+	): string {
+		const lines: string[] = [title, ''];
 
 		for (const entry of leaderboard.entries) {
 			const medal = this.getMedal(entry.rank);
