@@ -6,11 +6,11 @@
 
 **Why upstream is broken**: WhatsApp rolled out an A/B test on 28 January 2026 that stopped auto-loading the internal `WAWebSetPushnameConnAction` module on WhatsApp Web 2.3000.x. The official `whatsapp-web.js` library waits for that module during its post-authentication initialisation, so `client.emit('ready')` never fires. The `authenticated` event fires three times in a row as the underlying state machine retries, then the bot hangs indefinitely. Tracked upstream in pedroslopez/whatsapp-web.js#5758 and #127084 — both still open and unresolved as of April 2026.
 
-**Why this fork**: `timothydillan` maintains a branch with 19 targeted commits addressing exactly this cluster of bugs — duplicate event listeners, polling for the missing module, attachEventListeners guards, and several store-fallback patches for the 2.3000.x bundle. It is the only working option we found that does not require migrating off `whatsapp-web.js` entirely.
+**Why this fork**: `timothydillan` maintains a branch with 19 targeted commits addressing exactly this cluster of bugs — duplicate event listeners, polling for the missing module, attachEventListeners guards, and several store-fallback patches for the 2.3000.x bundle. It is the only working option that does not require migrating off `whatsapp-web.js` entirely.
 
-**Pinned to a commit hash, not a branch**: never change the pin to `#fix/duplicate-events-and-bindings` (unpinned). The fork can move under us. If the fork needs updating, fetch the new commit SHA explicitly.
+**Pinned to a commit hash, not a branch**: never change the pin to `#fix/duplicate-events-and-bindings` (unpinned). The fork can move underneath the project. If the fork needs updating, fetch the new commit SHA explicitly.
 
-**This is a temporary fix**. The fork is unofficial and could go unmaintained. The long-term plan is to migrate to `@whiskeysockets/baileys`, which talks WhatsApp's protocol directly instead of driving a Chromium instance. See the migration discussion in conversation history for the trade-offs (ban risk, API surface, image handling rewrite).
+**This is a temporary fix**. The fork is unofficial and could go unmaintained. The long-term plan is to migrate to `@whiskeysockets/baileys`, which talks WhatsApp's protocol directly instead of driving a Chromium instance. The trade-offs (ban risk, API surface, image handling rewrite) mean the migration is not trivial.
 
 ## .wwebjs_cache Host Directory Permissions
 
@@ -68,4 +68,4 @@
 
 **Why**: On slower machines, async/await couldn't account for initialization race conditions. Need time for everything to catch up.
 
-**Use case**: Set to 10-30 seconds on Raspberry Pi or slow VPS if seeing startup issues.
+**Use case**: Set to 10–30 seconds on slow hardware (Raspberry Pi, small VPS) if seeing startup issues.

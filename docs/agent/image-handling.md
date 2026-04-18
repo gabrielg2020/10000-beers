@@ -38,10 +38,8 @@ Example: `1234567890-abc123-def456.jpg`
 
 **Indexed**: `imageHash` column has database index for fast duplicate lookups.
 
-## No Orphaned Images (Yet)
+## Orphaned Image Prevention
 
 **Cleanup on duplicate**: If duplicate found, immediately delete the newly processed image.
 
 **Cleanup on AI rejection**: If AI rejects, delete the image before throwing error.
-
-**Track record**: No orphaned images encountered so far across ~300 beers.

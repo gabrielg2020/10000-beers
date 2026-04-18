@@ -6,8 +6,6 @@
 
 **When AI disabled**: Auto-accept still applies — honour system as before.
 
-**Real-world**: ~300 real beers tracked, zero rejections so far.
-
 ## Confidence Threshold (default 0.9)
 
 **High threshold intentional**: If `confidence >= 0.9`, trust the AI's `beerType` classification (can/bottle/draught).
@@ -26,7 +24,7 @@
 
 The classifier accepts both beer and cider as valid submissions and treats them equivalently. The JSON field is still named `beer_detected` for historical reasons — it returns `true` for either drink. Other alcoholic beverages (wine, spirits) are still rejected.
 
-**Why**: Group includes cider drinkers; rejecting their submissions felt arbitrary given the bot's casual, honour-system spirit.
+**Why**: Rejecting cider submissions feels arbitrary given the bot's casual, honour-system spirit.
 
 ## Cost Optimisation
 

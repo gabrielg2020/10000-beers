@@ -11,7 +11,6 @@ Before starting any task, read these files in order:
    - `docs/agent/chrome-and-whatsapp.md` — working on WhatsApp client or session
    - `docs/agent/testing.md` — writing tests
    - `docs/agent/deployment.md` — working on Docker or deployment
-   - `docs/agent/backups-and-routine-tasks.md` — working on backups, cron jobs, healthchecks, or the prod migration
  
 Do not skip this step. These files contain the business context and decisions that are not visible from the code alone.
  
@@ -34,7 +33,7 @@ src/
 ├── index.ts              - App entry point
 ├── config/               - Configuration loader and validation
 ├── handlers/             - Message and command routing
-├── commands/             - Command implementations (!undo, !leaderboard, !removeLast, !release)
+├── commands/             - Command implementations (!undo, !leaderboard, !removeLast, !release, !stats)
 ├── services/             - Business logic (beer, user, image, AI, statistics)
 ├── database/             - Prisma schema and client
 ├── types/                - TypeScript type definitions

@@ -15,3 +15,7 @@ images/
 # Testing
 coverage/
 .nyc_output/
+
+# Deployment-specific scripts, configs and backup artefacts.
+# Tracked in a separate private repo (see ops/README.md).
+ops/

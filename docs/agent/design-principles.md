@@ -12,7 +12,7 @@ The group is collectively trying to reach **10,000 beers**. This is not a compet
  
 **Fail fast**: Validate all config at startup and exit immediately. Don't wait for runtime failures. If something's wrong, crash early.
  
-**Cost optimisation**: Check for duplicates *before* AI validation to avoid paying for images that won't be counted anyway. ~300 beers tracked so far with no rejections.
+**Cost optimisation**: Check for duplicates *before* AI validation to avoid paying for images that won't be counted anyway.
  
 ## Trade-offs Made
  

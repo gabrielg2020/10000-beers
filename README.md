@@ -6,7 +6,7 @@ A WhatsApp bot that tracks beer consumption for a group of friends. Send a photo
 
 - Automatic beer tracking via WhatsApp image submissions
 - Optional AI beer classification using Google Gemini
-- Leaderboard and statistics tracking
+- Leaderboard (admin-only) and group statistics (all users)
 - Undo last submission (10-minute window)
 - Admin commands for beer removal
 - PostgreSQL database with Prisma ORM
@@ -164,7 +164,8 @@ For comprehensive guides and documentation, visit the **[Wiki](https://github.co
 | Command | Description | Access |
 |---------|-------------|--------|
 | `!undo` | Remove your last beer submission (10-minute window) | All users |
-| `!leaderboard` | Display beer leaderboard | Admin only |
+| `!stats [day\|week\|month\|weekend]` | Show group drinking statistics for the period | All users |
+| `!leaderboard [day\|week\|month\|weekend]` | Display beer leaderboard (aliases: `!lb`, `!top`) | Admin only |
 | `!removeLast @user` | Remove that user's last beer submission | Admin only |
 | `!release [version]` | Fetch and display latest GitHub release | Admin only |
 

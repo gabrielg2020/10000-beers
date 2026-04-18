@@ -25,8 +25,6 @@ throw new BeerSubmissionError(
 
 **Why distinguish**: Unexpected errors signal bugs — "something I didn't account for". Helps identify issues beyond expected failure modes.
 
-**Never happened yet**: Defensive design. No unexpected errors in production so far (~300 beers).
-
 ## Fail Fast Philosophy
 
 **Config validation**: Check entire config at startup, exit immediately if invalid (config/index.ts:81-111).

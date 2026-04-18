@@ -50,7 +50,7 @@ Three indexes on Beer table:
 - **submittedAt**: Chronological queries (recent submissions, undo window)
 - **imageHash**: Duplicate detection
 
-**Scale concerns**: Could be slow at scale. Prod database small now (~300 beers) but will grow. Monitor performance as it grows past 10,000 beers.
+**Scale concerns**: Monitor index performance as the dataset grows past 10,000 beers.
 
 ## Prisma Choice
 

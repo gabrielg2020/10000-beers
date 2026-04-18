@@ -1,18 +1,8 @@
 # Testing
  
-## Current State
- 
-**Coverage**: Bad. Tests exist but incomplete.
- 
-**Why**:
-1. **Laziness**: Writing tests is boring and tedious
-2. **Philosophy**: Code coverage is not a good statistic. Tests should be written for the software, not as second thought or to hit randomly set metric.
- 
-## Development-Guide.md Test Sections
- 
-**100% aspirational**: Documentation shows how to write tests, but it's aspirational rather than actual practice.
- 
-**Still valuable**: Good reference for future, shows patterns if tests are written later.
+## Philosophy
+
+Code coverage is not a good statistic. Tests should be written for the software, not as a second thought or to hit an arbitrary metric. Coverage is currently incomplete by design — tests exist where they protect meaningful business rules, not to pad numbers.
  
 ## What Meaningful Tests Look Like
  
