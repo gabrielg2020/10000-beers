@@ -17,9 +17,11 @@ services:
       timeout: 5s
       retries: 5
 
-  bot:
+  whatsapp-adapter:
     image: ghcr.io/gabrielg2020/10000-beers:latest
-    container_name: beers-bot
+    build:
+      context: ./adapters/whatsapp
+    container_name: beers-whatsapp-adapter
     pull_policy: always
     restart: unless-stopped
     env_file:

@@ -1,4 +1,6 @@
-import 'dotenv/config';
+import path from 'node:path';
+import dotenv from 'dotenv';
+dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 import { Client, LocalAuth } from 'whatsapp-web.js';
 import { logger } from '../src/utils/logger';
 import { prisma } from '../src/database';

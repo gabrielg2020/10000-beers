@@ -1,4 +1,6 @@
-import 'dotenv/config'; // KEEP FIRST
+import path from 'node:path';
+import dotenv from 'dotenv';
+dotenv.config({ path: path.resolve(__dirname, '../../../.env') }); // KEEP FIRST
 import type { Client } from 'whatsapp-web.js';
 import { logger } from './utils/logger';
 import { imageService } from './services/imageService';
